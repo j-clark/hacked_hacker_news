@@ -1,47 +1,89 @@
 ;(function() {
 
+  BETTER_HN = {};
+  BETTER_HN.scoreSpan = 'span[id^="score_"]';
+  BETTER_HN.hrefID = 'a[href^="item?id="]';
+
   $(function() {
 
     injectJQuery();
 
     if(isCommentsPage()) {
+      // set unread count
       // highlight unread posts
       addCommentsToLocalStorage();
     } else {
-      $('span[id^="score_"]').each(function() {
-        addStoryToLocalStorage(this.id.split('_')[1]);
-      });
+      setUnreadCounts();
+      addStoriesToLocalStorage();
     }
 
   });
 
+  function setUnreadCounts() {
+
+    $(BETTER_HN.scoreSpan).each(function() {
+      var comments_link = $(this).parent().find('a[href^="item?id="]');
+      var num_comments = parseInt(comments_link.text(), 10) || 0;
+      var comms = localStorage.getItem( this.id.split('_')[1] );
+      var unread = 0;
+
+      if(comms) {
+        unread = num_comments - comms.split(',').length
+      } else {
+        unread = num_comments;
+      }
+
+      comments_link.parent().append(' |<span class=unread-count> ' + unread + ' unread</span>');
+    })
+
+  }
+
   function addCommentsToLocalStorage() {
+
+    //storyID should not be assumed to already by in localStorage
+    //could have followed a link from not the front page
     var storyID = document.URL.match(/\d+$/);
     var commentIDs = getCommentIDs();
-    var readComments = localStorage.getItem(storyID) || '';
+    var idStr = '';
 
-    if(readComments !== '' && commentIDs.length) {
-      readComments = readComments + ',' + commentIDs.join();
-    } else if(readComments === '' && commentIDs.length) {
-      readComments = commentIDs.join();
+    //FIXME: this will lose history for multipage comment threads.
+    //eventually, this should append to the existing list, not
+    //just overwrite it.
+    if(commentIDs.length) {
+      idStr = commentIDs.join();
     }
 
-    localStorage.setItem(storyID, readComments);
+    localStorage.setItem(storyID, idStr);
+  }
 
+  function toObject(str) {
+    if(str === '') return {};
+
+    var obj = {};
+    var arr = str.split(',');
+
+    for(var i = 0; i < arr.length; i++) {
+      obj[arr[i]] = true;
+    }
+
+    return obj;
   }
 
   function getCommentIDs() {
     var ids = [];
-    $('.comhead > a[href^="item?id="]').each(function() {
-      ids[ids.length] = this.getAttribute('href').split('=')[1];
+    $('.comhead > ' + BETTER_HN.hrefID).each(function() {
+      ids.push(this.getAttribute('href').split('=')[1]);
     });
     return ids;
   }
 
-  function addStoryToLocalStorage(postID) {
-    if(!localStorage.getItem(postID)) {
-      localStorage.setItem(postID, []);
-    }
+  function addStoriesToLocalStorage() {
+    $(BETTER_HN.scoreSpan).each(function() {
+      var id = this.id.split('_')[1];
+      if(!localStorage.getItem(id)) {
+        localStorage.setItem(id, []);
+      }
+    });
   }
 
   function isCommentsPage() {

@@ -1,3 +1,7 @@
 .unread {
   background-color: #abc;
 }
+
+.unread-count {
+  font-weight: bold;
+}
