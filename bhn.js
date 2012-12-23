@@ -1,8 +1,8 @@
 ;(function() {
 
-  BETTER_HN = {};
-  BETTER_HN.scoreSpan = 'span[id^="score_"]';
-  BETTER_HN.hrefID = 'a[href^="item?id="]';
+  BHNUtil = {};
+  BHNUtil.scoreSpan = 'span[id^="score_"]';
+  BHNUtil.hrefID = 'a[href^="item?id="]';
 
   $(function() {
 
@@ -23,8 +23,8 @@
     var storyID = getStoryID();
     var readComments = localStorage.getItem(storyID);
 
-    readComments = toObject(readComments || '');
-    $('.comhead > ' + BETTER_HN.hrefID).each(function() {
+    readComments = idStringToObject(readComments || '');
+    $('.comhead > ' + BHNUtil.hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
       if(!readComments[id]) {
         $(this).parent().parent().parent().addClass('unread');
@@ -35,8 +35,8 @@
 
   function setUnreadCounts() {
 
-    $(BETTER_HN.scoreSpan).each(function() {
-      var comments_link = $(this).parent().find(BETTER_HN.hrefID);
+    $(BHNUtil.scoreSpan).each(function() {
+      var comments_link = $(this).parent().find(BHNUtil.hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
       var comms = localStorage.getItem( this.id.split('_')[1] );
       var unread = 0;
@@ -76,7 +76,7 @@
     localStorage.setItem(storyID, idStr);
   }
 
-  function toObject(str) {
+  BHNUtil.idStringToObject = function(str) {
     if(str === '') return {};
 
     var obj = {};
@@ -87,18 +87,18 @@
     }
 
     return obj;
-  }
+  };
 
   function getCommentIDs() {
     var ids = [];
-    $('.comhead > ' + BETTER_HN.hrefID).each(function() {
+    $('.comhead > ' + BHNUtil.hrefID).each(function() {
       ids.push(this.getAttribute('href').split('=')[1]);
     });
     return ids;
   }
 
   function addStoriesToLocalStorage() {
-    $(BETTER_HN.scoreSpan).each(function() {
+    $(BHNUtil.scoreSpan).each(function() {
       var id = this.id.split('_')[1];
       if(!localStorage.getItem(id)) {
         localStorage.setItem(id, []);
