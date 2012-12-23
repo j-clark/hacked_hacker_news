@@ -34,9 +34,15 @@
         unread = num_comments;
       }
 
-      comments_link.parent().append(' |<span class=unread-count> ' + unread + ' unread</span>');
+      comments_link.parent().append(unreadLink(comments_link[0], unread));
     })
 
+  }
+
+  function unreadLink(aElem, unread) {
+    return ' | <a href="' +
+      aElem.getAttribute('href') +
+      '"" class=unread-count>' + unread + ' unread</a>'
   }
 
   function addCommentsToLocalStorage() {
