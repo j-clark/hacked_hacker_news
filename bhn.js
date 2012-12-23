@@ -23,7 +23,7 @@
     var storyID = getStoryID();
     var readComments = localStorage.getItem(storyID);
 
-    readComments = idStringToObject(readComments || '');
+    readComments = BHNUtil.idStringToObject(readComments || '');
     $('.comhead > ' + BHNUtil.hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
       if(!readComments[id]) {
@@ -47,15 +47,9 @@
         unread = num_comments;
       }
 
-      comments_link.parent().append(unreadLink(comments_link[0], unread));
+      comments_link.parent().append(' | ' + BHNUtil.unreadLink(comments_link[0], unread));
     })
 
-  }
-
-  function unreadLink(aElem, unread) {
-    return ' | <a href="' +
-      aElem.getAttribute('href') +
-      '"" class=unread-count>' + unread + ' unread</a>';
   }
 
   function addCommentsToLocalStorage() {
@@ -75,19 +69,6 @@
 
     localStorage.setItem(storyID, idStr);
   }
-
-  BHNUtil.idStringToObject = function(str) {
-    if(str === '') return {};
-
-    var obj = {};
-    var arr = str.split(',');
-
-    for(var i = 0; i < arr.length; i++) {
-      obj[arr[i]] = true;
-    }
-
-    return obj;
-  };
 
   function getCommentIDs() {
     var ids = [];
@@ -109,6 +90,25 @@
   function getStoryID() {
     return document.URL.match(/\d+$/);
   }
+
+  BHNUtil.idStringToObject = function(str) {
+    if(str === '') return {};
+
+    var obj = {};
+    var arr = str.split(',');
+
+    for(var i = 0; i < arr.length; i++) {
+      obj[arr[i]] = true;
+    }
+
+    return obj;
+  };
+
+  BHNUtil.unreadLink = function(aElem, unread) {
+    return '<a href="' +
+      aElem.getAttribute('href') +
+      '" class="unread-count">' + unread + ' unread</a>';
+  };
 
   function injectJQuery() {
     var elem = document.createElement('script');
