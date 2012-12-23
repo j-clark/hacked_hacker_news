@@ -6,14 +6,15 @@
 
   $(function() {
 
+    //REMOVE THIS
     injectJQuery();
 
+    setUnreadCounts();
     if(isCommentsPage()) {
       // set unread count
       // highlight unread posts
       addCommentsToLocalStorage();
     } else {
-      setUnreadCounts();
       addStoriesToLocalStorage();
     }
 
@@ -22,7 +23,7 @@
   function setUnreadCounts() {
 
     $(BETTER_HN.scoreSpan).each(function() {
-      var comments_link = $(this).parent().find('a[href^="item?id="]');
+      var comments_link = $(this).parent().find(BETTER_HN.hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
       var comms = localStorage.getItem( this.id.split('_')[1] );
       var unread = 0;
