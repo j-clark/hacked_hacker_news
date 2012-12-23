@@ -10,15 +10,28 @@
     injectJQuery();
 
     setUnreadCounts();
-    if(isCommentsPage()) {
-      // set unread count
-      // highlight unread posts
+    if(getStoryID() !== null) {
+      markUnreadComments();
       addCommentsToLocalStorage();
     } else {
       addStoriesToLocalStorage();
     }
 
   });
+
+  function markUnreadComments() {
+    var storyID = getStoryID();
+    var readComments = localStorage.getItem(storyID);
+
+    readComments = toObject(readComments || '');
+    $('.comhead > ' + BETTER_HN.hrefID).each(function() {
+      var id = this.getAttribute('href').split('=')[1];
+      if(!readComments[id]) {
+        $(this).parent().parent().parent().addClass('unread');
+      }
+    });
+
+  }
 
   function setUnreadCounts() {
 
@@ -42,14 +55,14 @@
   function unreadLink(aElem, unread) {
     return ' | <a href="' +
       aElem.getAttribute('href') +
-      '"" class=unread-count>' + unread + ' unread</a>'
+      '"" class=unread-count>' + unread + ' unread</a>';
   }
 
   function addCommentsToLocalStorage() {
 
     //storyID should not be assumed to already by in localStorage
     //could have followed a link from not the front page
-    var storyID = document.URL.match(/\d+$/);
+    var storyID = getStoryID();
     var commentIDs = getCommentIDs();
     var idStr = '';
 
@@ -93,8 +106,8 @@
     });
   }
 
-  function isCommentsPage() {
-    return document.URL.match(/item\?id=\d+/);
+  function getStoryID() {
+    return document.URL.match(/\d+$/);
   }
 
   function injectJQuery() {
