@@ -108,11 +108,40 @@
     });
   }
 
+  function scrollToNextUnread() {
+    var firstUnread = $($('.unread')[0]);
+    $('.reading').removeClass('reading');
+    if(firstUnread.length) {
+      firstUnread.addClass('reading');
+      firstUnread.removeClass('unread');
+      var scrollY = firstUnread.offset().top - (window.innerHeight - firstUnread.height()) / 2;
+      if(firstUnread.height() >= window.innerHeight) {
+        scrollToPosition(0, firstUnread.offset().top);
+      } else {
+        scrollToPosition(0, scrollY);
+      }
+    }
+  }
+
+  function scrollToPosition(x, y) {
+    if(false) {
+      window.scrollTo(x, y);
+    } else {
+      $('html, body').animate({scrollTop:y}, 100);
+    }
+  }
+
   $(function() {
     setUnreadCounts();
     if(getStoryID() !== null) {
       markUnreadComments();
       BHNUtil.addCommentsToLocalStorage(getStoryID(), getCommentIDs());
+
+      $('body').keypress(function(event) {
+        if(event.keyCode === 106) {
+          scrollToNextUnread();
+        }
+      });
     } else {
       addStoriesToLocalStorage();
     }

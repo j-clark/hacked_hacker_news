@@ -1,5 +1,10 @@
-.unread {
+.reading, .unread {
   background-color: #ccc;
+  padding:5px;
+}
+
+.reading {
+  box-shadow:3px 3px 5px #888;
 }
 
 .unread-count {
