@@ -1,85 +1,106 @@
 ;(function() {
 
+  var scoreSpan = 'span[id^="score_"]';
+  var hrefID = 'a[href^="item?id="]';
+
   BHNUtil = {};
-  BHNUtil.scoreSpan = 'span[id^="score_"]';
-  BHNUtil.hrefID = 'a[href^="item?id="]';
+  BHNUtil = {
+    addCommentsToLocalStorage: function(storyID, commentIDs) {
+      var obj = {};
+      var i;
 
-  $(function() {
+      if(commentIDs.length) {
 
-    //REMOVE THIS
-    injectJQuery();
+        obj = BHNUtil.idStringToObject(localStorage.getItem(storyID));
+        for(i = 0; i < commentIDs.length; i++) {
+          obj[commentIDs[i]] = true;
+        }
+      }
 
-    setUnreadCounts();
-    if(getStoryID() !== null) {
-      markUnreadComments();
-      addCommentsToLocalStorage();
-    } else {
-      addStoriesToLocalStorage();
+      localStorage.setItem(storyID, BHNUtil.objectToIDString(obj));
+    },
+
+    idStringToObject: function(str) {
+
+      var obj = {};
+      var i;
+
+      if(str !== '' && str !== null) {
+        var arr = str.split(',');
+
+        for(i = 0; i < arr.length; i++) {
+          obj[arr[i]] = true;
+        }
+      }
+
+      return obj;
+    },
+
+    objectToIDString: function(obj) {
+
+      var str = [];
+      var key;
+      if(obj) {
+        for(key in obj) {
+          str.push(key);
+        }
+      }
+      return str.join();
+    },
+
+    unreadLink: function(aElem, unread) {
+      return '<a href="' +
+        aElem.getAttribute('href') +
+        '" class="unread-count">' + unread + ' unread</a>';
     }
+  };
 
-  });
+  function getStoryID() {
+    return document.URL.match(/\d+$/);
+  }
 
   function markUnreadComments() {
     var storyID = getStoryID();
     var readComments = localStorage.getItem(storyID);
 
     readComments = BHNUtil.idStringToObject(readComments || '');
-    $('.comhead > ' + BHNUtil.hrefID).each(function() {
+    $('.comhead > ' + hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
       if(!readComments[id]) {
         $(this).parent().parent().parent().addClass('unread');
       }
     });
-
   }
 
   function setUnreadCounts() {
 
-    $(BHNUtil.scoreSpan).each(function() {
-      var comments_link = $(this).parent().find(BHNUtil.hrefID);
+    $(scoreSpan).each(function() {
+      var comments_link = $(this).parent().find(hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
       var comms = localStorage.getItem( this.id.split('_')[1] );
       var unread = 0;
 
       if(comms) {
-        unread = num_comments - comms.split(',').length
+        unread = num_comments - comms.split(',').length;
       } else {
         unread = num_comments;
       }
 
       comments_link.parent().append(' | ' + BHNUtil.unreadLink(comments_link[0], unread));
-    })
+    });
 
-  }
-
-  function addCommentsToLocalStorage() {
-
-    //storyID should not be assumed to already by in localStorage
-    //could have followed a link from not the front page
-    var storyID = getStoryID();
-    var commentIDs = getCommentIDs();
-    var idStr = '';
-
-    //FIXME: this will lose history for multipage comment threads.
-    //eventually, this should append to the existing list, not
-    //just overwrite it.
-    if(commentIDs.length) {
-      idStr = commentIDs.join();
-    }
-
-    localStorage.setItem(storyID, idStr);
   }
 
   function getCommentIDs() {
     var ids = [];
-    $('.comhead > ' + BHNUtil.hrefID).each(function() {
+    $('.comhead > ' + hrefID).each(function() {
       ids.push(this.getAttribute('href').split('=')[1]);
     });
     return ids;
   }
 
   function addStoriesToLocalStorage() {
-    $(BHNUtil.scoreSpan).each(function() {
+    $(scoreSpan).each(function() {
       var id = this.id.split('_')[1];
       if(!localStorage.getItem(id)) {
         localStorage.setItem(id, []);
@@ -87,33 +108,14 @@
     });
   }
 
-  function getStoryID() {
-    return document.URL.match(/\d+$/);
-  }
-
-  BHNUtil.idStringToObject = function(str) {
-    if(str === '') return {};
-
-    var obj = {};
-    var arr = str.split(',');
-
-    for(var i = 0; i < arr.length; i++) {
-      obj[arr[i]] = true;
+  $(function() {
+    setUnreadCounts();
+    if(getStoryID() !== null) {
+      markUnreadComments();
+      BHNUtil.addCommentsToLocalStorage(getStoryID(), getCommentIDs());
+    } else {
+      addStoriesToLocalStorage();
     }
-
-    return obj;
-  };
-
-  BHNUtil.unreadLink = function(aElem, unread) {
-    return '<a href="' +
-      aElem.getAttribute('href') +
-      '" class="unread-count">' + unread + ' unread</a>';
-  };
-
-  function injectJQuery() {
-    var elem = document.createElement('script');
-    elem.src = 'http://code.jquery.com/jquery-latest.min.js';
-    document.getElementsByTagName('head')[0].appendChild(elem);
-  }
+  });
 
 })();
