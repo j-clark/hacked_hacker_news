@@ -141,8 +141,8 @@
         that.closest('.default').append( $(data).find('form').addClass('inline-reply')[0] );
         that.text('cancel');
         that.addClass('inline-reply-cancel');
+        that.off('click');
         that.click(function(event) {
-          $(this).off('click');
           hideInlineReply(this);
           event.preventDefault();
         })
@@ -154,8 +154,8 @@
     var that = $(elem);
     that.text('reply');
     that.closest('.default').find('.inline-reply').remove();
+    that.off('click');
     that.click(function(event) {
-      $(this).off('click');
       event.preventDefault();
       showInlineReply(this);
     });
@@ -170,12 +170,13 @@
       $('body').keypress(function(event) {
         if(event.keyCode === 106) {
           scrollToNextUnread();
+        } else if(event.keyCode === 114) {
+          $('.reading').find('a[href^="reply"]').click();
         }
       });
 
       $('a[href^="reply"]').click(function(event) {
         event.preventDefault();
-        $(this).off('click');
         showInlineReply(this);
       });
     } else {
