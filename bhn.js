@@ -44,7 +44,6 @@
     var storyID = getStoryID();
     var thread = JSON.parse(localStorage.getItem(storyID) || {})
 
-    // thread = BHNUtil.idStringToObject(thread || '');
     $('.comhead > ' + hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
 
@@ -125,7 +124,6 @@
       success: function(data) {
         that.closest('.default').append( $(data).find('form').addClass('inline-reply')[0] );
         that.text('cancel');
-        that.addClass('inline-reply-cancel');
         that.off('click');
         that.click(function(event) {
           hideInlineReply(this);
