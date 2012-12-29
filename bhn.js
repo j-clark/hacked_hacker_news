@@ -55,6 +55,10 @@
     }
   };
 
+  function isThreadPage() {
+    return document.URL.match(/\d+$/) && !$('.default').find('a:contains("parent")').length;
+  }
+
   function getStoryID() {
     return document.URL.match(/\d+$/);
   }
@@ -161,9 +165,15 @@
     });
   }
 
+  function bhnCares() {
+    return document.URL.indexOf('thread') < 0 &&
+      document.URL.indexOf('newcomments') < 0 &&
+      !isThreadPage();
+  }
+
   $(function() {
-    setUnreadCounts();
     if(getStoryID() !== null) {
+      setUnreadCounts();
       markUnreadComments();
       BHNUtil.addCommentsToLocalStorage(getStoryID(), getCommentIDs());
 
@@ -179,7 +189,8 @@
         event.preventDefault();
         showInlineReply(this);
       });
-    } else {
+    } else if(bhnCares()) {
+      setUnreadCounts();
       addStoriesToLocalStorage();
     }
   });
