@@ -11,41 +11,16 @@
 
       if(commentIDs.length) {
 
-        obj = BHNUtil.idStringToObject(localStorage.getItem(storyID));
+        obj = JSON.parse(localStorage.getItem(storyID));
         for(i = 0; i < commentIDs.length; i++) {
-          obj[commentIDs[i]] = true;
+          if(obj.comments.indexOf(commentIDs[i]) < 0) {
+            obj.comments.push(commentIDs[i]);
+          }
         }
+        obj.date = new Date().getTime();
       }
 
-      localStorage.setItem(storyID, BHNUtil.objectToIDString(obj));
-    },
-
-    idStringToObject: function(str) {
-
-      var obj = {};
-      var i;
-
-      if(str !== '' && str !== null) {
-        var arr = str.split(',');
-
-        for(i = 0; i < arr.length; i++) {
-          obj[arr[i]] = true;
-        }
-      }
-
-      return obj;
-    },
-
-    objectToIDString: function(obj) {
-
-      var str = [];
-      var key;
-      if(obj) {
-        for(key in obj) {
-          str.push(key);
-        }
-      }
-      return str.join();
+      localStorage.setItem(storyID, JSON.stringify(obj));
     },
 
     unreadLink: function(aElem, unread) {
@@ -56,6 +31,8 @@
   };
 
   function isThreadPage() {
+    //pages showing a subthread where the parent is root, but is not a submission
+    //will match the regex, but shouldn't be treated as a submission/story
     return document.URL.match(/\d+$/) && !$('.default').find('a:contains("parent")').length;
   }
 
@@ -65,14 +42,14 @@
 
   function markUnreadComments() {
     var storyID = getStoryID();
-    var readComments = localStorage.getItem(storyID);
+    var thread = JSON.parse(localStorage.getItem(storyID) || {})
 
-    readComments = BHNUtil.idStringToObject(readComments || '');
+    // thread = BHNUtil.idStringToObject(thread || '');
     $('.comhead > ' + hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
-      if(!readComments[id]) {
-        $(this).parent().parent().parent().addClass('unread');
-      }
+
+      if(thread.comments.indexOf(id) < 0)
+        $(this).closest('.default').addClass('unread');
     });
   }
 
@@ -81,11 +58,11 @@
     $(scoreSpan).each(function() {
       var comments_link = $(this).parent().find(hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
-      var comms = localStorage.getItem( this.id.split('_')[1] );
+      var thread = JSON.parse(localStorage.getItem( this.id.split('_')[1] ));
       var unread = 0;
 
-      if(comms) {
-        unread = num_comments - comms.split(',').length;
+      if(thread) {
+        unread = num_comments - thread.comments.length;
       } else {
         unread = num_comments;
       }
@@ -106,8 +83,12 @@
   function addStoriesToLocalStorage() {
     $(scoreSpan).each(function() {
       var id = this.id.split('_')[1];
+      var new_obj = {
+        "date": new Date().getTime(),
+        "comments": []
+      }
       if(!localStorage.getItem(id)) {
-        localStorage.setItem(id, []);
+        localStorage.setItem(id, JSON.stringify(new_obj));
       }
     });
   }
