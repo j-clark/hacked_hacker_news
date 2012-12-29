@@ -131,6 +131,36 @@
     }
   }
 
+  function showInlineReply(elem) {
+    var url = 'http://news.ycombinator.com/' + elem.getAttribute('href');
+    var that = $(elem);
+
+    $.ajax({
+      url: url,
+      success: function(data) {
+        that.closest('.default').append( $(data).find('form').addClass('inline-reply')[0] );
+        that.text('cancel');
+        that.addClass('inline-reply-cancel');
+        that.click(function(event) {
+          $(this).off('click');
+          hideInlineReply(this);
+          event.preventDefault();
+        })
+      }
+    });
+  }
+
+  function hideInlineReply(elem) {
+    var that = $(elem);
+    that.text('reply');
+    that.closest('.default').find('.inline-reply').remove();
+    that.click(function(event) {
+      $(this).off('click');
+      event.preventDefault();
+      showInlineReply(this);
+    });
+  }
+
   $(function() {
     setUnreadCounts();
     if(getStoryID() !== null) {
@@ -141,6 +171,12 @@
         if(event.keyCode === 106) {
           scrollToNextUnread();
         }
+      });
+
+      $('a[href^="reply"]').click(function(event) {
+        event.preventDefault();
+        $(this).off('click');
+        showInlineReply(this);
       });
     } else {
       addStoriesToLocalStorage();
