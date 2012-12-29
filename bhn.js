@@ -2,6 +2,31 @@
 
   var scoreSpan = 'span[id^="score_"]';
   var hrefID = 'a[href^="item?id="]';
+  var testing = true;
+
+  BHN = {
+    storage: (function() {
+      if(testing) {
+        return localStorage;
+      } else {
+        return chrome.storage.sync;
+      }
+    }()),
+    setItem: function(key, value) {
+      if(testing) {
+        localStorage.setItem(key, value);
+      } else {
+        chrome.storage.sync.set({ key: value });
+      }
+    },
+    getItem: function(key, callback) {
+      if(testing) {
+        callback(localStorage.getItem(key));
+      } else {
+        chrome.storage.sync.get(key, callback);
+      }
+    }
+  }
 
   function saveComments(storyID, commentIDs) {
     var obj = { "d":0, "c":[] },
@@ -9,23 +34,25 @@
         somth = null,
         i;
 
-    if(commentIDs.length) {
+    BHN.getItem(storyID, function(item) {
+      if(commentIDs.length) {
 
-      somth = JSON.parse(localStorage.getItem(storyID));
-      if(somth) {
-        obj = somth;
-        new_thread = false;
-      }
-
-      for(i = 0; i < commentIDs.length; i++) {
-        if(new_thread || obj.c.indexOf(commentIDs[i]) < 0) {
-          obj.c.push(commentIDs[i]);
+        somth = JSON.parse(item);
+        if(somth) {
+          obj = somth;
+          new_thread = false;
         }
-      }
 
-      obj.d = new Date().getTime();
-      localStorage.setItem(storyID, JSON.stringify(obj));
-    }
+        for(i = 0; i < commentIDs.length; i++) {
+          if(new_thread || obj.c.indexOf(commentIDs[i]) < 0) {
+            obj.c.push(commentIDs[i]);
+          }
+        }
+
+        obj.d = new Date().getTime();
+        BHN.setItem(storyID, JSON.stringify(obj));
+      }
+    });
   }
 
   function unreadLink(aElem, unread) {
@@ -46,13 +73,15 @@
 
   function markUnreadComments() {
     var storyID = getStoryID();
-    var thread = JSON.parse(localStorage.getItem(storyID));
 
-    $('.comhead > ' + hrefID).each(function() {
-      var id = this.getAttribute('href').split('=')[1];
+    BHN.getItem(storyID, function(item) {
+      var thread = JSON.parse(item);
+      $('.comhead > ' + hrefID).each(function() {
+        var id = this.getAttribute('href').split('=')[1];
 
-      if(!thread || thread.c.indexOf(id) < 0)
-        $(this).closest('.default').addClass('unread');
+        if(!thread || thread.c.indexOf(id) < 0)
+          $(this).closest('.default').addClass('unread');
+      });
     });
   }
 
@@ -61,16 +90,19 @@
     $(scoreSpan).each(function() {
       var comments_link = $(this).parent().find(hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
-      var thread = JSON.parse(localStorage.getItem( this.id.split('_')[1] ));
-      var unread = 0;
 
-      if(thread) {
-        unread = num_comments - thread.c.length;
-      } else {
-        unread = num_comments;
-      }
+      BHN.getItem( this.id.split('_')[1], function(item) {
+        var thread = JSON.parse(item);
+        var unread = 0;
 
-      comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
+        if(thread) {
+          unread = num_comments - thread.c.length;
+        } else {
+          unread = num_comments;
+        }
+
+        comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
+      });
     });
 
   }
@@ -190,16 +222,18 @@
 
   function purgeOldComments() {
     var key,
-        obj,
-        now = new Date().getTime(),
-        date;
+        obj;
 
-    for(key in localStorage) {
-      obj = JSON.parse( localStorage.getItem(key) );
-      if(obj && daysOld(obj, 2)) {
-        localStorage.removeItem(key);
-        console.log('removing ' + key); //REMOVE ME
-      }
+    for(key in BHN.storage) {
+
+      BHN.getItem(key, function(item) {
+        obj = JSON.parse(item);
+        if(obj && daysOld(obj, 2)) {
+          BHN.removeItem(key);
+          console.log('removing ' + key); //REMOVE ME
+        }
+      });
+
     }
   }
 
@@ -211,16 +245,17 @@
   }
 
   function purgeCheck() {
-    var when = localStorage.getItem('lastPurge');
 
-    if(when) {
-      if(daysOld({"d": when}, 1)) {
-        purgeOldComments();
-        window.alert('purging'); //REMOVE ME
+    BHN.getItem('lastPurge', function(when) {
+      if(when) {
+        if(daysOld({"d": when}, 1)) {
+          purgeOldComments();
+          window.alert('purging'); //REMOVE ME
+        }
+      } else {
+        BHN.setItem('lastPurge', new Date().getTime());
       }
-    } else {
-      localStorage.setItem('lastPurge', new Date().getTime());
-    }
+    });
   }
 
   $(function() {
