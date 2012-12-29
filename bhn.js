@@ -13,11 +13,11 @@
 
         obj = JSON.parse(localStorage.getItem(storyID));
         for(i = 0; i < commentIDs.length; i++) {
-          if(obj.comments.indexOf(commentIDs[i]) < 0) {
-            obj.comments.push(commentIDs[i]);
+          if(obj.c.indexOf(commentIDs[i]) < 0) {
+            obj.c.push(commentIDs[i]);
           }
         }
-        obj.date = new Date().getTime();
+        obj.d = new Date().getTime();
       }
 
       localStorage.setItem(storyID, JSON.stringify(obj));
@@ -48,7 +48,7 @@
     $('.comhead > ' + hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
 
-      if(thread.comments.indexOf(id) < 0)
+      if(thread.c.indexOf(id) < 0)
         $(this).closest('.default').addClass('unread');
     });
   }
@@ -62,7 +62,7 @@
       var unread = 0;
 
       if(thread) {
-        unread = num_comments - thread.comments.length;
+        unread = num_comments - thread.c.length;
       } else {
         unread = num_comments;
       }
@@ -84,8 +84,8 @@
     $(scoreSpan).each(function() {
       var id = this.id.split('_')[1];
       var new_obj = {
-        "date": new Date().getTime(),
-        "comments": []
+        "d": new Date().getTime(),
+        "c": []
       }
       if(!localStorage.getItem(id)) {
         localStorage.setItem(id, JSON.stringify(new_obj));
