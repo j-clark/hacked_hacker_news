@@ -13,15 +13,19 @@
       }
     }()),
     setItem: function(key, value) {
+      var obj = {};
       if(testing) {
-        localStorage.setItem(key, value);
+        localStorage.setItem(key, JSON.stringify(value));
       } else {
-        chrome.storage.sync.set({ key: value });
+        obj[key] = value
+        chrome.storage.sync.set(obj);
       }
     },
     getItem: function(key, callback) {
+      var obj = {};
       if(testing) {
-        callback(localStorage.getItem(key));
+        obj[key] = JSON.parse(localStorage.getItem(key));
+        callback(obj);
       } else {
         chrome.storage.sync.get(key, callback);
       }
@@ -41,11 +45,10 @@
         somth = null,
         i;
 
-    BHN.getItem(storyID, function(item) {
+    BHN.getItem(storyID, function(somth) {
       if(commentIDs.length) {
 
-        somth = JSON.parse(item);
-        if(somth) {
+        if(somth && somth.c) {
           obj = somth;
           new_thread = false;
         }
@@ -57,7 +60,7 @@
         }
 
         obj.d = new Date().getTime();
-        BHN.setItem(storyID, JSON.stringify(obj));
+        BHN.setItem(storyID, obj);
       }
     });
   }
@@ -75,19 +78,25 @@
   }
 
   function getStoryID() {
-    return document.URL.match(/\d+$/);
+    return document.URL.match(/\d+$/)[0];
   }
 
   function markUnreadComments() {
     var storyID = getStoryID();
 
     BHN.getItem(storyID, function(item) {
-      var thread = JSON.parse(item);
       $('.comhead > ' + hrefID).each(function() {
         var id = this.getAttribute('href').split('=')[1];
 
-        if(!thread || thread.c.indexOf(id) < 0)
+        if(item) {
+          thread = item[storyID]
+        } else {
+          thread = item
+        }
+
+        if(!thread || !thread.c || thread.c.indexOf(id) < 0) {
           $(this).closest('.default').addClass('unread');
+        }
       });
     });
   }
@@ -97,13 +106,13 @@
     $(scoreSpan).each(function() {
       var comments_link = $(this).parent().find(hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
+      var id = this.id.split('_')[1];
 
-      BHN.getItem( this.id.split('_')[1], function(item) {
-        var thread = JSON.parse(item);
+      BHN.getItem(id, function(thread) {
         var unread = 0;
 
-        if(thread) {
-          unread = num_comments - thread.c.length;
+        if(thread && thread[id] && thread[id].c) {
+          unread = num_comments - thread[id].c.length;
         } else {
           unread = num_comments;
         }
@@ -234,7 +243,7 @@
     for(key in BHN.storage) {
 
       BHN.getItem(key, function(item) {
-        obj = JSON.parse(item);
+        obj = item;
         if(obj && daysOld(obj, 2)) {
           BHN.removeItem(key);
           console.log('removing ' + key); //REMOVE ME
