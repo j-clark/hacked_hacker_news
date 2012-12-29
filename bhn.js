@@ -176,6 +176,34 @@
     });
   }
 
+  function daysOld(obj, days) {
+    var now = new Date().getTime(),
+        then = parseInt(obj.d, 10);
+
+    if(then) {
+      return (now - then) / 1000 / 60 / 60 / 24 / days > 1;
+    } else {
+      return null;
+    }
+  }
+
+  function purgeOldComments() {
+    var key,
+        obj,
+        now = new Date().getTime(),
+        date;
+
+    for(key in localStorage) {
+      obj = JSON.parse( localStorage.getItem(key) );
+      if(obj && daysOld(obj, 7)) {
+        localStorage.removeItem(key);
+        console.log('removing ' + key);
+      } else {
+        console.log('not removing ' + key);
+      }
+    }
+  }
+
   function setupInlineReplying() {
     $('a[href^="reply"]').click(function(event) {
       event.preventDefault();
