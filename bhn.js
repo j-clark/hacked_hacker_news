@@ -181,7 +181,8 @@
         then = parseInt(obj.d, 10);
 
     if(then) {
-      return (now - then) / 1000 / 60 / 60 / 24 / days > 1;
+      //86400000 is the number of ms in a day
+      return (now - then) / 86400000 > days;
     } else {
       return null;
     }
@@ -195,11 +196,9 @@
 
     for(key in localStorage) {
       obj = JSON.parse( localStorage.getItem(key) );
-      if(obj && daysOld(obj, 7)) {
+      if(obj && daysOld(obj, 2)) {
         localStorage.removeItem(key);
-        console.log('removing ' + key);
-      } else {
-        console.log('not removing ' + key);
+        console.log('removing ' + key); //REMOVE ME
       }
     }
   }
@@ -209,6 +208,19 @@
       event.preventDefault();
       showInlineReply(this);
     });
+  }
+
+  function purgeCheck() {
+    var when = localStorage.getItem('lastPurge');
+
+    if(when) {
+      if(daysOld({"d": when}, 1)) {
+        purgeOldComments();
+        window.alert('purging'); //REMOVE ME
+      }
+    } else {
+      localStorage.setItem('lastPurge', new Date().getTime());
+    }
   }
 
   $(function() {
@@ -223,6 +235,7 @@
     } else if(bhnCares()) {
       setUnreadCounts();
     }
+    purgeCheck();
   });
 
 })();
