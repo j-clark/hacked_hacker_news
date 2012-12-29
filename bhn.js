@@ -2,7 +2,7 @@
 
   var scoreSpan = 'span[id^="score_"]';
   var hrefID = 'a[href^="item?id="]';
-  var testing = true;
+  var testing = false;
 
   BHN = {
     storage: (function() {
@@ -40,29 +40,22 @@
   }
 
   function saveComments(storyID, commentIDs) {
-    var obj = { "d":0, "c":[] },
-        new_thread = true,
-        somth = null,
+    var obj = {},
         i;
 
-    BHN.getItem(storyID, function(somth) {
-      if(commentIDs.length) {
+    if(commentIDs.length) {
+      obj['c'] = [];
 
-        if(somth && somth.c) {
-          obj = somth;
-          new_thread = false;
-        }
-
-        for(i = 0; i < commentIDs.length; i++) {
-          if(new_thread || obj.c.indexOf(commentIDs[i]) < 0) {
-            obj.c.push(commentIDs[i]);
-          }
-        }
-
-        obj.d = new Date().getTime();
-        BHN.setItem(storyID, obj);
+      //this won't work for older threads that are split into multiple pages,
+      //but solving that is more complicated than just retrieving the current
+      //list and appending to it
+      for(i = 0; i < commentIDs.length; i++) {
+        obj.c.push(commentIDs[i]);
       }
-    });
+
+      obj['d'] = new Date().getTime();
+      BHN.setItem(storyID, obj);
+    }
   }
 
   function unreadLink(aElem, unread) {
@@ -136,29 +129,28 @@
   }
 
   function scrollToNextUnread() {
-    var firstUnread = $( $('.unread')[0] ),
-        scrollY = 0;
+    var firstUnread = $( $('.unread')[0] );
+
     $('.reading').removeClass('reading');
 
     if(firstUnread.length) {
 
       firstUnread.addClass('reading');
       firstUnread.removeClass('unread');
-      scrollY = centerOf(firstUnread);
 
       if(firstUnread.height() >= window.innerHeight) {
-        scrollToPosition(firstUnread.offset().top);
+        bhnScrollTo(firstUnread.offset().top);
       } else {
-        scrollToPosition(scrollY);
+        bhnScrollTo( centerOf(firstUnread) );
       }
     }
   }
 
-  function scrollToPosition(y) {
+  function bhnScrollTo(y) {
     if(false) {
       window.scrollTo(0, y);
     } else {
-      $('html, body').animate({scrollTop:y}, 100);
+      $('html, body').animate({ scrollTop: y }, 100);
     }
   }
 
