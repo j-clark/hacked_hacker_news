@@ -25,6 +25,13 @@
       } else {
         chrome.storage.sync.get(key, callback);
       }
+    },
+    removeItem: function(key) {
+      if(testing) {
+        localStorage.removeItem(key);
+      } else {
+        chrome.storage.sync.remove(key);
+      }
     }
   }
 
