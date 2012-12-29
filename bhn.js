@@ -3,32 +3,36 @@
   var scoreSpan = 'span[id^="score_"]';
   var hrefID = 'a[href^="item?id="]';
 
-  BHNUtil = {};
-  BHNUtil = {
-    addCommentsToLocalStorage: function(storyID, commentIDs) {
-      var obj = {};
-      var i;
+  function saveComments(storyID, commentIDs) {
+    var obj = { "d":0, "c":[] },
+        new_thread = true,
+        somth = null,
+        i;
 
-      if(commentIDs.length) {
+    if(commentIDs.length) {
 
-        obj = JSON.parse(localStorage.getItem(storyID));
-        for(i = 0; i < commentIDs.length; i++) {
-          if(obj.c.indexOf(commentIDs[i]) < 0) {
-            obj.c.push(commentIDs[i]);
-          }
-        }
-        obj.d = new Date().getTime();
+      somth = JSON.parse(localStorage.getItem(storyID));
+      if(somth) {
+        obj = somth;
+        new_thread = false;
       }
 
-      localStorage.setItem(storyID, JSON.stringify(obj));
-    },
+      for(i = 0; i < commentIDs.length; i++) {
+        if(new_thread || obj.c.indexOf(commentIDs[i]) < 0) {
+          obj.c.push(commentIDs[i]);
+        }
+      }
 
-    unreadLink: function(aElem, unread) {
-      return '<a href="' +
-        aElem.getAttribute('href') +
-        '" class="unread-count">' + unread + ' unread</a>';
+      obj.d = new Date().getTime();
+      localStorage.setItem(storyID, JSON.stringify(obj));
     }
-  };
+  }
+
+  function unreadLink(aElem, unread) {
+    return '<a href="' +
+      aElem.getAttribute('href') +
+      '" class="unread-count">' + unread + ' unread</a>';
+  }
 
   function isThreadPage() {
     //pages showing a subthread where the parent is root, but is not a submission
@@ -42,12 +46,12 @@
 
   function markUnreadComments() {
     var storyID = getStoryID();
-    var thread = JSON.parse(localStorage.getItem(storyID) || {})
+    var thread = JSON.parse(localStorage.getItem(storyID));
 
     $('.comhead > ' + hrefID).each(function() {
       var id = this.getAttribute('href').split('=')[1];
 
-      if(thread.c.indexOf(id) < 0)
+      if(!thread || thread.c.indexOf(id) < 0)
         $(this).closest('.default').addClass('unread');
     });
   }
@@ -66,7 +70,7 @@
         unread = num_comments;
       }
 
-      comments_link.parent().append(' | ' + BHNUtil.unreadLink(comments_link[0], unread));
+      comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
     });
 
   }
@@ -79,45 +83,50 @@
     return ids;
   }
 
-  function addStoriesToLocalStorage() {
-    $(scoreSpan).each(function() {
-      var id = this.id.split('_')[1];
-      var new_obj = {
-        "d": new Date().getTime(),
-        "c": []
-      }
-      if(!localStorage.getItem(id)) {
-        localStorage.setItem(id, JSON.stringify(new_obj));
-      }
-    });
+  function centerOf(elem) {
+    return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
 
   function scrollToNextUnread() {
-    var firstUnread = $($('.unread')[0]);
+    var firstUnread = $( $('.unread')[0] ),
+        scrollY = 0;
     $('.reading').removeClass('reading');
+
     if(firstUnread.length) {
+
       firstUnread.addClass('reading');
       firstUnread.removeClass('unread');
-      var scrollY = firstUnread.offset().top - (window.innerHeight - firstUnread.height()) / 2;
+      scrollY = centerOf(firstUnread);
+
       if(firstUnread.height() >= window.innerHeight) {
-        scrollToPosition(0, firstUnread.offset().top);
+        scrollToPosition(firstUnread.offset().top);
       } else {
-        scrollToPosition(0, scrollY);
+        scrollToPosition(scrollY);
       }
     }
   }
 
-  function scrollToPosition(x, y) {
+  function scrollToPosition(y) {
     if(false) {
-      window.scrollTo(x, y);
+      window.scrollTo(0, y);
     } else {
       $('html, body').animate({scrollTop:y}, 100);
     }
   }
 
+  function showSpinner(elem) {
+    $(elem).parent('p').append('<img class="spinner" src="img/spinner" />');
+  }
+
+  function removeSpinner(elem) {
+    $(elem).parent('p').find('.spinner').remove();
+  }
+
   function showInlineReply(elem) {
     var url = 'http://news.ycombinator.com/' + elem.getAttribute('href');
     var that = $(elem);
+
+    showSpinner(elem);
 
     $.ajax({
       url: url,
@@ -150,27 +159,41 @@
       !isThreadPage();
   }
 
+  function handleKeypress() {
+    $('body').keypress(function(event) {
+
+      switch(event.keyCode) {
+        case 106:
+          scrollToNextUnread();
+          break;
+        case 114:
+          $('.reading').find('a[href^="reply"]').click();
+          break;
+        default:
+          break;
+      }
+
+    });
+  }
+
+  function setupInlineReplying() {
+    $('a[href^="reply"]').click(function(event) {
+      event.preventDefault();
+      showInlineReply(this);
+    });
+  }
+
   $(function() {
-    if(getStoryID() !== null) {
+    if(isThreadPage()) {
+
       setUnreadCounts();
       markUnreadComments();
-      BHNUtil.addCommentsToLocalStorage(getStoryID(), getCommentIDs());
+      saveComments(getStoryID(), getCommentIDs());
+      handleKeypress();
+      setupInlineReplying();
 
-      $('body').keypress(function(event) {
-        if(event.keyCode === 106) {
-          scrollToNextUnread();
-        } else if(event.keyCode === 114) {
-          $('.reading').find('a[href^="reply"]').click();
-        }
-      });
-
-      $('a[href^="reply"]').click(function(event) {
-        event.preventDefault();
-        showInlineReply(this);
-      });
     } else if(bhnCares()) {
       setUnreadCounts();
-      addStoriesToLocalStorage();
     }
   });
 
