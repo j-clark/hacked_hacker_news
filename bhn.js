@@ -4,6 +4,8 @@
   var hrefID = 'a[href^="item?id="]';
   var testing = false;
 
+  BHNPrefs = {};
+
   BHN = {
     storage: (function() {
       if(testing) {
@@ -124,6 +126,16 @@
     return ids;
   }
 
+  function getReadCommentIDs() {
+    var ids = [];
+    $('.comhead > ' + hrefID).each(function() {
+      if(!$(this).closest('.default').hasClass('unread')) {
+        ids.push(this.getAttribute('href').split('=')[1]);
+      }
+    });
+    return ids;
+  }
+
   function centerOf(elem) {
     return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
@@ -173,6 +185,9 @@
       success: function(data) {
         that.closest('.default').append( $(data).find('form').addClass('inline-reply')[0] );
         that.text('cancel');
+        that.closest('.default').find('input[value="reply"]').click(function(event) {
+          saveComments(getStoryID(), getReadCommentIDs());
+        });
         that.off('click');
         that.click(function(event) {
           hideInlineReply(this);
@@ -266,7 +281,39 @@
     });
   }
 
+  function settingsIcon() {
+    var pagetop = $('span.pagetop')[1];
+
+    $('body').append( $('<div id="settings-panel" name="settings-panel" class="hidden" />').append('<span />').text('hi') )
+
+    if(pagetop) {
+      $(pagetop).append($('<span> | </span>'))
+      $(pagetop).append($('<a href="#settings-panel" class="settings"/>').text('settings'))
+    } else {
+      console.log('asdf')
+    }
+    $('.settings').leanModal();
+  }
+
+  function loadPrefs() {
+    BHN.getItem('BHNPrefs', function(data) {
+      var prefs = BHNPrefs;
+
+      if(data && data['BHNPrefs']) {
+
+      }
+
+      BHN.setItem('BHNPrefs', prefs);
+    })
+  }
+
   $(function() {
+    $('a[href="submit"]').off('click')
+    $('a[href="submit"]').leanModal();
+
+    settingsIcon();
+    loadPrefs();
+
     if(isThreadPage()) {
 
       setUnreadCounts();
