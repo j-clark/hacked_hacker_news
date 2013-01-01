@@ -1,7 +1,9 @@
 ;(function() {
 
-  var scoreSpan = 'span[id^="score_"]';
-  var hrefID = 'a[href^="item?id="]';
+  BHNConst = {
+    scoreSpan: 'span[id^="score_"]',
+    hrefID: 'a[href^="item?id="]'
+  }
 
   BHNPrefs = {};
 
@@ -62,7 +64,7 @@
     var storyID = getStoryID();
 
     BHN.getItem(storyID, function(item) {
-      $('.comhead > ' + hrefID).each(function() {
+      $('.comhead > ' + BHNConst.hrefID).each(function() {
         var id = this.getAttribute('href').split('=')[1];
 
         if(item) {
@@ -80,8 +82,8 @@
 
   function setUnreadCounts() {
 
-    $(scoreSpan).each(function() {
-      var comments_link = $(this).parent().find(hrefID);
+    $(BHNConst.scoreSpan).each(function() {
+      var comments_link = $(this).parent().find(BHNConst.hrefID);
       var num_comments = parseInt(comments_link.text(), 10) || 0;
       var id = this.id.split('_')[1];
 
@@ -102,7 +104,7 @@
 
   function getCommentIDs() {
     var ids = [];
-    $('.comhead > ' + hrefID).each(function() {
+    $('.comhead > ' + BHNConst.hrefID).each(function() {
       ids.push(this.getAttribute('href').split('=')[1]);
     });
     return ids;
@@ -110,7 +112,7 @@
 
   function getReadCommentIDs() {
     var ids = [];
-    $('.comhead > ' + hrefID).each(function() {
+    $('.comhead > ' + BHNConst.hrefID).each(function() {
       if(!$(this).closest('.default').hasClass('unread')) {
         ids.push(this.getAttribute('href').split('=')[1]);
       }
