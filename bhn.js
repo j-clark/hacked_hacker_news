@@ -2,10 +2,13 @@
 
   BHNConst = {
     scoreSpan: 'span[id^="score_"]',
-    hrefID: 'a[href^="item?id="]'
+    hrefID: 'a[href^="item?id="]',
+    prefsKey: 'BHNPrefs'
   }
 
-  BHNPrefs = {};
+  BHNPrefs = {
+    animateScroll: true
+  };
 
   BHN = {
     storage: chrome.storage.sync,
@@ -13,15 +16,15 @@
     setItem: function(key, value) {
       var obj = {};
       obj[key] = value
-      chrome.storage.sync.set(obj);
+      this.storage.set(obj);
     },
 
     getItem: function(key, callback) {
-      chrome.storage.sync.get(key, callback);
+      this.storage.get(key, callback);
     },
 
     removeItem: function(key) {
-      chrome.storage.sync.remove(key);
+      this.storage.remove(key);
     }
   }
 
@@ -53,11 +56,12 @@
   function isThreadPage() {
     //pages showing a subthread where the parent is root, but is not a submission
     //will match the regex, but shouldn't be treated as a submission/story
-    return document.URL.match(/\d+$/) && !$('.default').find('a:contains("parent")').length;
+    return getStoryID() && !$('.default').find('a:contains("parent")').length;
   }
 
   function getStoryID() {
-    return document.URL.match(/\d+$/)[0];
+    var id = document.URL.match(/\d+$/);
+    return id && id[0];
   }
 
   function markUnreadComments() {
@@ -66,12 +70,7 @@
     BHN.getItem(storyID, function(item) {
       $('.comhead > ' + BHNConst.hrefID).each(function() {
         var id = this.getAttribute('href').split('=')[1];
-
-        if(item) {
-          thread = item[storyID]
-        } else {
-          thread = item
-        }
+        var thread = item && item[storyID];
 
         if(!thread || !thread.c || thread.c.indexOf(id) < 0) {
           $(this).closest('.default').addClass('unread');
@@ -83,19 +82,15 @@
   function setUnreadCounts() {
 
     $(BHNConst.scoreSpan).each(function() {
-      var comments_link = $(this).parent().find(BHNConst.hrefID);
-      var num_comments = parseInt(comments_link.text(), 10) || 0;
-      var id = this.id.split('_')[1];
+      var comments_link = $(this).parent().find(BHNConst.hrefID),
+          id = this.id.split('_')[1];
 
       BHN.getItem(id, function(thread) {
-        var unread = 0;
+        var unread = parseInt(comments_link.text(), 10) || 0;
 
         if(thread && thread[id] && thread[id].c) {
-          unread = num_comments - thread[id].c.length;
-        } else {
-          unread = num_comments;
+          unread -= thread[id].c.length;
         }
-
         comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
       });
     });
@@ -143,22 +138,22 @@
   }
 
   function bhnScrollTo(y) {
-    if(false) {
-      window.scrollTo(0, y);
-    } else {
+    if(BHNPrefs.animateScroll) {
       $('html, body').animate({ scrollTop: y }, 100);
+    } else {
+      window.scrollTo(0, y);
     }
   }
 
-  function showSpinner(elem) {
-    $(elem).parent('p').append('<img class="spinner" src="img/spinner" />');
-  }
+  // function showSpinner(elem) {
+  //   $(elem).parent('p').append('<img class="spinner" src="img/spinner" />');
+  // }
 
-  function removeSpinner(elem) {
-    $(elem).parent('p').find('.spinner').remove();
-  }
+  // function removeSpinner(elem) {
+  //   $(elem).parent('p').find('.spinner').remove();
+  // }
 
-  function showInlineReply(elem) {
+  function showInline(elem) {
     var href = elem.getAttribute('href');
     if(href[0] === '/') {
       href = href.substr(1, href.length);
@@ -166,7 +161,7 @@
     var url = 'http://news.ycombinator.com/' + href;
     var that = $(elem);
 
-    showSpinner(elem);
+    // showSpinner(elem);
 
     $.ajax({
       url: url,
@@ -174,27 +169,30 @@
         var def = that.closest('.default');
         def.append( $(data).find('form').addClass('inline-reply')[0] );
         that.text('cancel');
+
         def.find('input[value="reply"]').click(function(event) {
+          //since page reloads, resave only read comments
           saveComments(getStoryID(), getReadCommentIDs());
         });
+
         def.find('textarea').focus();
         that.off('click');
         that.click(function(event) {
-          hideInlineReply(this);
           event.preventDefault();
+          hideInlineReply(this);
         })
       }
     });
   }
 
   function hideInlineReply(elem) {
-    var that = $(elem);
-    that.text('reply');
-    that.closest('.default').find('.inline-reply').remove();
-    that.off('click');
-    that.click(function(event) {
+    elem = $(elem);
+    elem.text('reply');
+    elem.closest('.default').find('.inline-reply').remove();
+    elem.off('click');
+    elem.click(function(event) {
       event.preventDefault();
-      showInlineReply(this);
+      showInline(this);
     });
   }
 
@@ -208,11 +206,17 @@
     $('body').keypress(function(event) {
       if(document.activeElement.tagName !== 'TEXTAREA') {
         switch(event.keyCode) {
+          case 97:
+            $('.reading').closest('.default').parent().find('a[id^="up_"]').click();
+            break;
           case 106:
             scrollToNextUnread();
             break;
           case 114:
             $('.reading').find('a[href^="reply"]').click();
+            break;
+          case 122:
+            $('.reading').closest('.default').parent().find('a[id^="down_"]').click();
             break;
           default:
             break;
@@ -250,17 +254,6 @@
     }
   }
 
-  function setupInlining() {
-    var reply = 'a[href^="reply"]',
-        edit = 'a[href^="edit"]',
-        del = 'a[href^="/x?fnid="]:contains("delete")';
-
-    $(reply + ',' + edit + ',' + del).click(function(event) {
-      event.preventDefault();
-      showInlineReply(this);
-    });
-  }
-
   function purgeCheck() {
 
     BHN.getItem('lastPurge', function(when) {
@@ -276,10 +269,22 @@
     });
   }
 
+  function setupInlining() {
+    var reply = 'a[href^="reply"]',
+        edit = 'a[href^="edit"]',
+        del = 'a[href^="/x?fnid="]:contains("delete")';
+
+    $(reply + ',' + edit + ',' + del).click(function(event) {
+      event.preventDefault();
+      showInline(this);
+    });
+  }
+
   function settingsIcon() {
     var pagetop = $('span.pagetop')[1];
+    var div = '<div id="settings-panel" name="settings-panel" class="hidden" />';
 
-    $('body').append( $('<div id="settings-panel" name="settings-panel" class="hidden" />').append('<span />').text('hi') )
+    $('body').append( $(div).append('<span />').text('hi') )
 
     if(pagetop) {
       $(pagetop).append($('<span> | </span>'))
@@ -291,14 +296,14 @@
   }
 
   function loadPrefs() {
-    BHN.getItem('BHNPrefs', function(data) {
+    BHN.getItem(BHNConst.prefsKey, function(data) {
       var prefs = BHNPrefs;
 
-      if(data && data['BHNPrefs']) {
+      if(data && data[BHNConst.prefsKey]) {
 
       }
 
-      BHN.setItem('BHNPrefs', prefs);
+      BHN.setItem(BHNConst.prefsKey, prefs);
     })
   }
 
