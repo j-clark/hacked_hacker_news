@@ -175,7 +175,11 @@
   }
 
   function showInlineReply(elem) {
-    var url = 'http://news.ycombinator.com/' + elem.getAttribute('href');
+    var href = elem.getAttribute('href');
+    if(href[0] === '/') {
+      href = href.substr(1, href.length);
+    }
+    var url = 'http://news.ycombinator.com/' + href;
     var that = $(elem);
 
     showSpinner(elem);
@@ -183,11 +187,13 @@
     $.ajax({
       url: url,
       success: function(data) {
-        that.closest('.default').append( $(data).find('form').addClass('inline-reply')[0] );
+        var def = that.closest('.default');
+        def.append( $(data).find('form').addClass('inline-reply')[0] );
         that.text('cancel');
-        that.closest('.default').find('input[value="reply"]').click(function(event) {
+        def.find('input[value="reply"]').click(function(event) {
           saveComments(getStoryID(), getReadCommentIDs());
         });
+        def.find('textarea').focus();
         that.off('click');
         that.click(function(event) {
           hideInlineReply(this);
@@ -216,18 +222,18 @@
 
   function handleKeypress() {
     $('body').keypress(function(event) {
-
-      switch(event.keyCode) {
-        case 106:
-          scrollToNextUnread();
-          break;
-        case 114:
-          $('.reading').find('a[href^="reply"]').click();
-          break;
-        default:
-          break;
+      if(document.activeElement.tagName !== 'TEXTAREA') {
+        switch(event.keyCode) {
+          case 106:
+            scrollToNextUnread();
+            break;
+          case 114:
+            $('.reading').find('a[href^="reply"]').click();
+            break;
+          default:
+            break;
+        }
       }
-
     });
   }
 
@@ -260,8 +266,12 @@
     }
   }
 
-  function setupInlineReplying() {
-    $('a[href^="reply"]').click(function(event) {
+  function setupInlining() {
+    var reply = 'a[href^="reply"]',
+        edit = 'a[href^="edit"]',
+        del = 'a[href^="/x?fnid="]:contains("delete")';
+
+    $(reply + ',' + edit + ',' + del).click(function(event) {
       event.preventDefault();
       showInlineReply(this);
     });
@@ -270,10 +280,11 @@
   function purgeCheck() {
 
     BHN.getItem('lastPurge', function(when) {
-      if(when) {
+      if(when && when['lastPurge  ']) {
         if(daysOld({"d": when}, 1)) {
           purgeOldComments();
           window.alert('purging'); //REMOVE ME
+          BHN.setItem('lastPurge', new Date().getTime());
         }
       } else {
         BHN.setItem('lastPurge', new Date().getTime());
@@ -320,7 +331,7 @@
       markUnreadComments();
       saveComments(getStoryID(), getCommentIDs());
       handleKeypress();
-      setupInlineReplying();
+      setupInlining();
 
     } else if(bhnCares()) {
       setUnreadCounts();
