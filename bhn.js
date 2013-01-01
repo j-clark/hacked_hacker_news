@@ -2,42 +2,24 @@
 
   var scoreSpan = 'span[id^="score_"]';
   var hrefID = 'a[href^="item?id="]';
-  var testing = false;
 
   BHNPrefs = {};
 
   BHN = {
-    storage: (function() {
-      if(testing) {
-        return localStorage;
-      } else {
-        return chrome.storage.sync;
-      }
-    }()),
+    storage: chrome.storage.sync,
+
     setItem: function(key, value) {
       var obj = {};
-      if(testing) {
-        localStorage.setItem(key, JSON.stringify(value));
-      } else {
-        obj[key] = value
-        chrome.storage.sync.set(obj);
-      }
+      obj[key] = value
+      chrome.storage.sync.set(obj);
     },
+
     getItem: function(key, callback) {
-      var obj = {};
-      if(testing) {
-        obj[key] = JSON.parse(localStorage.getItem(key));
-        callback(obj);
-      } else {
-        chrome.storage.sync.get(key, callback);
-      }
+      chrome.storage.sync.get(key, callback);
     },
+
     removeItem: function(key) {
-      if(testing) {
-        localStorage.removeItem(key);
-      } else {
-        chrome.storage.sync.remove(key);
-      }
+      chrome.storage.sync.remove(key);
     }
   }
 
