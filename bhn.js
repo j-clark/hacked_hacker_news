@@ -80,10 +80,12 @@
   function setUnreadCounts() {
     $('.subtext').find('a:contains("flag")').each(function() {
       var comments_link = $(this).parent().find(BHNConst.hrefID),
-          id = this.id.split('_')[1];
+          id = comments_link[0].getAttribute('href').split('=')[1];
 
       BHN.getItem(id, function(thread) {
         var unread = parseInt(comments_link.text(), 10) || 0;
+
+        console.log(thread[4993753].c.length)
 
         if(thread && thread[id] && thread[id].c) {
           unread -= thread[id].c.length;
@@ -238,6 +240,9 @@
         then = parseInt(obj.d, 10);
 
     if(then) {
+
+      console.log('lastPuge: ' + ((now - then) / (86400000/24) ) + ' hours ago')
+
       //86400000 is the number of ms in a day
       return (now - then) / 86400000 > days;
     } else {
@@ -253,9 +258,12 @@
 
       BHN.getItem(key, function(item) {
         obj = item;
-        if(obj && daysOld(obj, 2)) {
+        if(key === 'lastPurge') return;
+        if(obj[key] && daysOld(obj[key], 1)) {
           BHN.removeItem(key);
           console.log('removing ' + key); //REMOVE ME
+        } else {
+          console.log(obj)
         }
       });
 
@@ -265,12 +273,12 @@
   function purgeCheck() {
 
     BHN.getItem('lastPurge', function(when) {
-      if(when && when['lastPurge  ']) {
-        if(daysOld({"d": when}, 1)) {
+      if(when && when['lastPurge']) {
+        // if(daysOld({ 'd': when['lastPurge'] }, 1/24)) {
           purgeOldComments();
           window.alert('purging'); //REMOVE ME
           BHN.setItem('lastPurge', new Date().getTime());
-        }
+        // }
       } else {
         BHN.setItem('lastPurge', new Date().getTime());
       }
@@ -333,7 +341,7 @@
     } else if(bhnCares()) {
       setUnreadCounts();
     }
-    purgeCheck();
+    // purgeCheck();
   });
 
 })();
