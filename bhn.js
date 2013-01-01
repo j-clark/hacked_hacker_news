@@ -80,10 +80,7 @@
   }
 
   function setUnreadCounts() {
-
-    $(BHNConst.scoreSpan).each(function() {
-      if($(this).parent().hasClass('comhead')) return;
-
+    $('.subtext').find('a:contains("flag")').each(function() {
       var comments_link = $(this).parent().find(BHNConst.hrefID),
           id = this.id.split('_')[1];
 
@@ -96,7 +93,6 @@
         comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
       });
     });
-
   }
 
   function getCommentIDs() {
