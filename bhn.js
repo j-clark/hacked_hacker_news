@@ -167,13 +167,8 @@
       url: url,
       success: function(data) {
         var def = that.closest('.default');
-        def.append( $(data).find('form').addClass('inline-reply')[0] );
+        def.append( $(data).find('form').ajaxForm().addClass('inline-reply')[0] );
         that.text('cancel');
-
-        def.find('input[value="reply"]').click(function(event) {
-          //since page reloads, resave only read comments
-          saveComments(getStoryID(), getReadCommentIDs());
-        });
 
         def.find('textarea').focus();
         that.off('click');
@@ -313,6 +308,7 @@
 
     settingsIcon();
     loadPrefs();
+    setupInlining();
 
     if(isThreadPage()) {
 
@@ -320,7 +316,6 @@
       markUnreadComments();
       saveComments(getStoryID(), getCommentIDs());
       handleKeypress();
-      setupInlining();
 
     } else if(bhnCares()) {
       setUnreadCounts();

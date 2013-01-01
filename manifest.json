@@ -1,7 +1,7 @@
 {
  "content_scripts": [ {
     "css": [ "bhn.css" ],
-    "js": [ "jquery-1.8.3.min.js", "bhn.js", "jquery.leanModal.min.js" ],
+    "js": [ "jquery-1.8.3.min.js", "bhn.js", "jquery.leanModal.min.js", "jquery.form.js" ],
     "matches": [ "http://news.ycombinator.com/*" ],
     "run_at": "document_start"
   } ],
