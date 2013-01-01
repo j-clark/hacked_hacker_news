@@ -6,5 +6,10 @@
 ###Current features:###
 * Keeps track of unread comments
   * Shows unread count on front page and comment page
-* Highlights unread comments
-  * Scrolls to next unread comment by pressing 'j'
+  * Highlights unread comments
+* Inline reply submission, editing and deletion
+* Keyboard navigation in comment threads
+  * 'j': go to next unread comment
+  * 'a': upvote currently selected comment
+  * 'z': downvote currently selected comment
+  * 'r': reply to currently selected comment

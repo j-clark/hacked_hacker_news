@@ -1,7 +1,6 @@
 ;(function() {
 
   BHNConst = {
-    scoreSpan: 'span[id^="score_"]',
     hrefID: 'a[href^="item?id="]',
     prefsKey: 'BHNPrefs'
   }
@@ -47,9 +46,8 @@
     }
   }
 
-  function unreadLink(aElem, unread) {
-    return '<a href="' +
-      aElem.getAttribute('href') +
+  function unreadLink(a, unread) {
+    return '<a href="' + a.getAttribute('href') +
       '" class="unread-count">' + unread + ' unread</a>';
   }
 
