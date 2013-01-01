@@ -166,24 +166,34 @@
     $.ajax({
       url: url,
       success: function(data) {
-        var def = that.closest('.default');
-        def.append( $(data).find('form').ajaxForm().addClass('inline-reply')[0] );
-        that.text('cancel');
+        var def = that.closest('.default'),
+            form = $(data).find('form'),
+            originText = that.text();
+        def.append(form.addClass('inline-form')[0]);
 
+        formSubmissionHandler(form, originText);
+
+        that.text('cancel');
         def.find('textarea').focus();
         that.off('click');
         that.click(function(event) {
           event.preventDefault();
-          hideInlineReply(this);
+          hideInline(this, originText);
         })
       }
     });
   }
 
-  function hideInlineReply(elem) {
+  function formSubmissionHandler(form, type) {
+    form.ajaxForm();
+
+    console.log(type)
+  }
+
+  function hideInline(elem, text) {
     elem = $(elem);
-    elem.text('reply');
-    elem.closest('.default').find('.inline-reply').remove();
+    elem.text(text);
+    elem.closest('.default').find('.inline-form').remove();
     elem.off('click');
     elem.click(function(event) {
       event.preventDefault();
