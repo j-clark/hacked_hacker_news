@@ -82,6 +82,8 @@
   function setUnreadCounts() {
 
     $(BHNConst.scoreSpan).each(function() {
+      if($(this).parent().hasClass('comhead')) return;
+
       var comments_link = $(this).parent().find(BHNConst.hrefID),
           id = this.id.split('_')[1];
 
