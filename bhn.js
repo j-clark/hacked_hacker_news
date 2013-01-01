@@ -185,7 +185,14 @@
   }
 
   function formSubmissionHandler(form, type) {
-    form.ajaxForm();
+    form.ajaxForm(function() {
+      if(type === 'delete') {
+        form.closest('tbody').remove();
+      } else {
+        form.remove();
+      }
+    });
+
 
     console.log(type)
   }
