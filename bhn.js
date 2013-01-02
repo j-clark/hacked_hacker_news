@@ -85,9 +85,7 @@
       BHN.getItem(id, function(thread) {
         var unread = parseInt(comments_link.text(), 10) || 0;
 
-        console.log(thread[4993753].c.length)
-
-        if(thread && thread[id] && thread[id].c) {
+        if(thread[id] && thread[id].c) {
           unread -= thread[id].c.length;
         }
         comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
@@ -241,7 +239,7 @@
 
     if(then) {
 
-      console.log('lastPuge: ' + ((now - then) / (86400000/24) ) + ' hours ago')
+      console.log('age: ' + ((now - then) / (86400000/24) ) + ' hours old')
 
       //86400000 is the number of ms in a day
       return (now - then) / 86400000 > days;
@@ -254,31 +252,40 @@
     var key,
         obj;
 
-    for(key in BHN.storage) {
+    BHN.getItem(null, function(storage) {
+      for(key in storage) {
 
-      BHN.getItem(key, function(item) {
-        obj = item;
-        if(key === 'lastPurge') return;
-        if(obj[key] && daysOld(obj[key], 1)) {
-          BHN.removeItem(key);
-          console.log('removing ' + key); //REMOVE ME
-        } else {
-          console.log(obj)
-        }
-      });
+        BHN.getItem(key, function(obj) {
+          var innerKey;
 
-    }
+          for(innerKey in obj) {
+            console.log('key ' + innerKey)
+
+            if(obj.hasOwnProperty(innerKey)) {
+              if(obj[innerKey].d && daysOld(obj[innerKey], 1)) {
+                BHN.removeItem(innerKey);
+                console.log('removing ' + innerKey); //REMOVE ME
+              } else {
+                console.log(obj)
+              }
+            }
+          }
+        });
+      }
+    });
   }
 
   function purgeCheck() {
 
     BHN.getItem('lastPurge', function(when) {
-      if(when && when['lastPurge']) {
-        // if(daysOld({ 'd': when['lastPurge'] }, 1/24)) {
+      if(when['lastPurge']) {
+        if(daysOld({ 'd': when['lastPurge'] }, 1/24)) {
           purgeOldComments();
-          window.alert('purging'); //REMOVE ME
+          window.alert('purging. check console'); //REMOVE ME
           BHN.setItem('lastPurge', new Date().getTime());
-        // }
+        } else {
+
+        }
       } else {
         BHN.setItem('lastPurge', new Date().getTime());
       }
@@ -315,7 +322,7 @@
     BHN.getItem(BHNConst.prefsKey, function(data) {
       var prefs = BHNPrefs;
 
-      if(data && data[BHNConst.prefsKey]) {
+      if(data[BHNConst.prefsKey]) {
 
       }
 
@@ -341,7 +348,7 @@
     } else if(bhnCares()) {
       setUnreadCounts();
     }
-    // purgeCheck();
+    purgeCheck();
   });
 
 })();
