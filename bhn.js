@@ -185,20 +185,7 @@
       if(type === 'delete') {
         form.closest('tbody').remove();
       } else if(type === 'edit') {
-
-
-        $.ajax({
-          url: document.URL,
-          success: function(data) {
-            var id = $(form).parent().find('span[id^="score_"]')[0].id,
-                newComment = $(data).find('#' + id).closest('table').closest('tr');
-
-            form.closest('table').closest('tr').replaceWith(newComment)
-
-            //more elegant way to do this without readding handlers to everything?
-            setupInlining();
-          }
-        });
+        submitEdit(form);
       } else {
         form.remove();
       }
@@ -213,6 +200,21 @@
     elem.click(function(event) {
       event.preventDefault();
       showInline(this);
+    });
+  }
+
+  function submitEdit(form) {
+    $.ajax({
+      url: document.URL,
+      success: function(data) {
+        var id = $(form).parent().find('span[id^="score_"]')[0].id,
+            newComment = $(data).find('#' + id).closest('table').closest('tr');
+
+        form.closest('table').closest('tr').replaceWith(newComment)
+
+        //more elegant way to do this without readding handlers to everything?
+        setupInlining();
+      }
     });
   }
 
