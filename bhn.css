@@ -21,17 +21,6 @@
   cursor: pointer;
 }
 
-#lean_overlay {
-  position: fixed;
-  z-index:100;
-  top: 0px;
-  left: 0px;
-  height:100%;
-  width:100%;
-  background: #000;
-  display: none;
-}
-
 .hidden {
   display: none;
   position: fixed;
@@ -41,4 +30,17 @@
   width: 600px;
   padding: 30px;
   background: #FFF;
+}
+
+#colorbox, #cboxOverlay, #cboxWrapper{position:absolute; top:0; left:0; z-index:9999; overflow:hidden;}
+
+#cboxOverlay{
+  position:fixed; width:100%; height:100%;
+  background-color: grey;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#cboxContent {
+  background-color: black;
 }

@@ -142,7 +142,9 @@
   }
 
   function showSpinner(elem) {
-    $(elem).closest('.default').append( $('<span class="spinner"/>').text('loading...') )
+    var spinnerURL = chrome.extension.getURL('/img/spinner.gif'),
+        spinner = $('<img class="spinner" src="' + spinnerURL + '"/>');
+    $(elem).closest('.default').append(spinner);
   }
 
   function removeSpinner(elem) {
@@ -255,9 +257,6 @@
         then = parseInt(obj.d, 10);
 
     if(then) {
-
-      console.log('age: ' + ((now - then) / (86400000/24) ) + ' hours old')
-
       //86400000 is the number of ms in a day
       return (now - then) / 86400000 > days;
     } else {
@@ -276,14 +275,9 @@
           var innerKey;
 
           for(innerKey in obj) {
-            console.log('key ' + innerKey)
-
             if(obj.hasOwnProperty(innerKey)) {
               if(obj[innerKey].d && daysOld(obj[innerKey], 1)) {
                 BHN.removeItem(innerKey);
-                console.log('removing ' + innerKey); //REMOVE ME
-              } else {
-                console.log(obj)
               }
             }
           }
@@ -298,10 +292,7 @@
       if(when['lastPurge']) {
         if(daysOld({ 'd': when['lastPurge'] }, 1/24)) {
           purgeOldComments();
-          window.alert('purging. check console'); //REMOVE ME
           BHN.setItem('lastPurge', new Date().getTime());
-        } else {
-
         }
       } else {
         BHN.setItem('lastPurge', new Date().getTime());
@@ -326,36 +317,49 @@
     var pagetop = $('span.pagetop')[1];
     var div = '<div id="settings-panel" name="settings-panel" class="hidden" />';
 
-    $('body').append( $(div).append('<span />').text('hi') )
+    $('body').append( $(div).append('<span />').text('this isn\'t implented yet') )
 
     if(pagetop) {
       $(pagetop).append($('<span> | </span>'))
       $(pagetop).append($('<a href="#settings-panel" class="settings"/>').text('settings'))
-    } else {
-      console.log('asdf')
     }
-    $('.settings').leanModal();
+    $('.settings').colorbox({html:$('#settings-panel').html(), top:'10%'});
   }
 
   function loadPrefs() {
     BHN.getItem(BHNConst.prefsKey, function(data) {
       var prefs = BHNPrefs;
 
-      if(data[BHNConst.prefsKey]) {
-
-      }
-
       BHN.setItem(BHNConst.prefsKey, prefs);
     })
   }
 
+  function inlineSubmission() {
+    $('a[href="submit"]').click(function(event) {
+      event.preventDefault();
+      var href = this.getAttribute('href');
+      $.ajax({
+        url:'http://news.ycombinator.com/' + href,
+        success: function(data) {
+          var form = $(data).find('form');
+          form.find('a[href$="bookmarklet.html"]').closest('tr').remove();
+          $.colorbox({
+            html: form.parent().html(),
+            top:'10%'
+          });
+        }
+      });
+    });
+  }
+
   $(function() {
     $('a[href="submit"]').off('click')
-    $('a[href="submit"]').leanModal();
+
 
     settingsIcon();
     loadPrefs();
     setupInlining();
+    inlineSubmission();
 
     if(isThreadPage()) {
 
