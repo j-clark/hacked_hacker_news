@@ -141,23 +141,24 @@
     }
   }
 
-  // function showSpinner(elem) {
-  //   $(elem).parent('p').append('<img class="spinner" src="img/spinner" />');
-  // }
+  function showSpinner(elem) {
+    $(elem).closest('.default').append( $('<span class="spinner"/>').text('loading...') )
+  }
 
-  // function removeSpinner(elem) {
-  //   $(elem).parent('p').find('.spinner').remove();
-  // }
+  function removeSpinner(elem) {
+    $('.spinner').remove();
+  }
 
   function showInline(elem) {
     var href = elem.getAttribute('href');
+    var url = 'http://news.ycombinator.com/'
+    var that = $(elem);
+
     if(href[0] === '/') {
       href = href.substr(1, href.length);
     }
-    var url = 'http://news.ycombinator.com/' + href;
-    var that = $(elem);
-
-    // showSpinner(elem);
+    url += href;
+    $('.inline-form').remove();
 
     $.ajax({
       url: url,
@@ -167,6 +168,7 @@
             originText = that.text();
 
         def.append(form.addClass('inline-form')[0]);
+        removeSpinner();
         formSubmissionHandler(form, originText);
 
         that.text('cancel');
@@ -189,6 +191,7 @@
       } else {
         form.remove();
       }
+      removeSpinner();
     });
   }
 
@@ -313,6 +316,7 @@
 
     $(reply + ',' + edit + ',' + del).click(function(event) {
       event.preventDefault();
+      showSpinner(this);
       $(this).off('click');
       showInline(this);
     });
