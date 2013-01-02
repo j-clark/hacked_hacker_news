@@ -1,9 +1,35 @@
+/*
+
+  MIT licensed.
+
+  Copyright (c) 2012-2013 Joshua Clark <atxjclark@gmail.com>
+
+  Permission is hereby granted, free of charge, to any person obtaining a
+  copy of this software and associated documentation files (the "Software"),
+  to deal in the Software without restriction, including without limitation
+  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+  and/or sell copies of the Software, and to permit persons to whom the
+  Software is furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
 ;(function() {
+  'use strict';
 
   BHNConst = {
     hrefID: 'a[href^="item?id="]',
     prefsKey: 'BHNPrefs'
-  }
+  };
 
   BHNPrefs = {
     animateScroll: true
@@ -14,7 +40,7 @@
 
     setItem: function(key, value) {
       var obj = {};
-      obj[key] = value
+      obj[key] = value;
       this.storage.set(obj);
     },
 
@@ -25,14 +51,14 @@
     removeItem: function(key) {
       this.storage.remove(key);
     }
-  }
+  };
 
   function saveComments(storyID, commentIDs) {
     var obj = {},
         i;
 
     if(commentIDs.length) {
-      obj['c'] = [];
+      obj.c = [];
 
       //this won't work for older threads that are split into multiple pages,
       //but solving that is more complicated than just retrieving the current
@@ -41,7 +67,7 @@
         obj.c.push(commentIDs[i]);
       }
 
-      obj['d'] = new Date().getTime();
+      obj.d = new Date().getTime();
       BHN.setItem(storyID, obj);
     }
   }
@@ -51,15 +77,15 @@
       '" class="unread-count">' + unread + ' unread</a>';
   }
 
+  function getStoryID() {
+    var id = document.URL.match(/\d+$/);
+    return id && id[0];
+  }
+
   function isThreadPage() {
     //pages showing a subthread where the parent is root, but is not a submission
     //will match the regex, but shouldn't be treated as a submission/story
     return getStoryID() && !$('.default').find('a:contains("parent")').length;
-  }
-
-  function getStoryID() {
-    var id = document.URL.match(/\d+$/);
-    return id && id[0];
   }
 
   function markUnreadComments() {
@@ -67,8 +93,8 @@
 
     BHN.getItem(storyID, function(item) {
       $('.comhead > ' + BHNConst.hrefID).each(function() {
-        var id = this.getAttribute('href').split('=')[1];
-        var thread = item && item[storyID];
+        var id = this.getAttribute('href').split('=')[1],
+            thread = item && item[storyID];
 
         if(!thread || !thread.c || thread.c.indexOf(id) < 0) {
           $(this).closest('.default').addClass('unread');
@@ -115,6 +141,14 @@
     return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
 
+  function bhnScrollTo(y) {
+    if(BHNPrefs.animateScroll) {
+      $('html, body').animate({ scrollTop: y }, 100);
+    } else {
+      window.scrollTo(0, y);
+    }
+  }
+
   function scrollToNextUnread() {
     var firstUnread = $( $('.unread')[0] );
 
@@ -133,14 +167,6 @@
     }
   }
 
-  function bhnScrollTo(y) {
-    if(BHNPrefs.animateScroll) {
-      $('html, body').animate({ scrollTop: y }, 100);
-    } else {
-      window.scrollTo(0, y);
-    }
-  }
-
   function showSpinner(elem) {
     var spinnerURL = chrome.extension.getURL('/img/spinner.gif'),
         spinner = $('<img class="spinner" src="' + spinnerURL + '"/>');
@@ -151,10 +177,38 @@
     $('.spinner').remove();
   }
 
+  function submitEdit(form) {
+    $.ajax({
+      url: document.URL,
+      success: function(data) {
+        var id = $(form).parent().find('span[id^="score_"]')[0].id,
+            newComment = $(data).find('#' + id).closest('table').closest('tr');
+
+        form.closest('table').closest('tr').replaceWith(newComment);
+
+        //more elegant way to do this without readding handlers to everything?
+        setupInlining();
+      }
+    });
+  }
+
+  function formSubmissionHandler(form, type) {
+    form.ajaxForm(function() {
+      if(type === 'delete') {
+        form.closest('tbody').remove();
+      } else if(type === 'edit') {
+        submitEdit(form);
+      } else {
+        form.remove();
+      }
+      removeSpinner();
+    });
+  }
+
   function showInline(elem) {
-    var href = elem.getAttribute('href');
-    var url = 'http://news.ycombinator.com/'
-    var that = $(elem);
+    var href = elem.getAttribute('href'),
+        url = 'http://news.ycombinator.com/',
+        that = $(elem);
 
     if(href[0] === '/') {
       href = href.substr(1, href.length);
@@ -179,21 +233,8 @@
         that.click(function(event) {
           event.preventDefault();
           hideInline(this, originText);
-        })
+        });
       }
-    });
-  }
-
-  function formSubmissionHandler(form, type) {
-    form.ajaxForm(function() {
-      if(type === 'delete') {
-        form.closest('tbody').remove();
-      } else if(type === 'edit') {
-        submitEdit(form);
-      } else {
-        form.remove();
-      }
-      removeSpinner();
     });
   }
 
@@ -205,21 +246,6 @@
     elem.click(function(event) {
       event.preventDefault();
       showInline(this);
-    });
-  }
-
-  function submitEdit(form) {
-    $.ajax({
-      url: document.URL,
-      success: function(data) {
-        var id = $(form).parent().find('span[id^="score_"]')[0].id,
-            newComment = $(data).find('#' + id).closest('table').closest('tr');
-
-        form.closest('table').closest('tr').replaceWith(newComment)
-
-        //more elegant way to do this without readding handlers to everything?
-        setupInlining();
-      }
     });
   }
 
@@ -265,32 +291,34 @@
   }
 
   function purgeOldComments() {
-    var key,
-        obj;
-
     BHN.getItem(null, function(storage) {
+      var key,
+          obj;
       for(key in storage) {
-
-        BHN.getItem(key, function(obj) {
-          var innerKey;
-
-          for(innerKey in obj) {
-            if(obj.hasOwnProperty(innerKey)) {
-              if(obj[innerKey].d && daysOld(obj[innerKey], 1)) {
-                BHN.removeItem(innerKey);
-              }
-            }
-          }
-        });
+        if(storage.hasOwnProperty(key)) {
+          BHN.getItem(key, purge);
+        }
       }
     });
+  }
+
+  function purge(obj) {
+    var innerKey;
+
+    for(innerKey in obj) {
+      if(obj.hasOwnProperty(innerKey)) {
+        if(obj[innerKey].d && daysOld(obj[innerKey], 1)) {
+          BHN.removeItem(innerKey);
+        }
+      }
+    }
   }
 
   function purgeCheck() {
 
     BHN.getItem('lastPurge', function(when) {
-      if(when['lastPurge']) {
-        if(daysOld({ 'd': when['lastPurge'] }, 1/24)) {
+      if(when.lastPurge) {
+        if(daysOld({ 'd': when.lastPurge }, 1/24)) {
           purgeOldComments();
           BHN.setItem('lastPurge', new Date().getTime());
         }
@@ -314,14 +342,14 @@
   }
 
   function settingsIcon() {
-    var pagetop = $('span.pagetop')[1];
-    var div = '<div id="settings-panel" name="settings-panel" class="hidden" />';
+    var pagetop = $('span.pagetop')[1],
+        div = '<div id="settings-panel" name="settings-panel" class="hidden" />';
 
-    $('body').append( $(div).append('<span />').text('this isn\'t implented yet') )
+    $('body').append( $(div).append('<span />').text('this isn\'t implented yet') );
 
     if(pagetop) {
-      $(pagetop).append($('<span> | </span>'))
-      $(pagetop).append($('<a href="#settings-panel" class="settings"/>').text('settings'))
+      $(pagetop).append($('<span> | </span>'));
+      $(pagetop).append($('<a href="#settings-panel" class="settings"/>').text('settings'));
     }
     $('.settings').colorbox({html:$('#settings-panel').html(), top:'10%'});
   }
@@ -331,7 +359,7 @@
       var prefs = BHNPrefs;
 
       BHN.setItem(BHNConst.prefsKey, prefs);
-    })
+    });
   }
 
   function inlineSubmission() {
@@ -353,8 +381,7 @@
   }
 
   $(function() {
-    $('a[href="submit"]').off('click')
-
+    $('a[href="submit"]').off('click');
 
     settingsIcon();
     loadPrefs();
