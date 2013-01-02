@@ -26,14 +26,14 @@
 ;(function() {
   'use strict';
 
-  BHNConst = {
+  var BHNConst = {
     hrefID: 'a[href^="item?id="]',
     prefsKey: 'BHNPrefs'
-  };
+  },
 
   BHNPrefs = {
     animateScroll: true
-  };
+  },
 
   BHN = {
     storage: chrome.storage.sync,
