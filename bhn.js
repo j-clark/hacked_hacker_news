@@ -165,8 +165,8 @@
         var def = that.closest('.default'),
             form = $(data).find('form'),
             originText = that.text();
-        def.append(form.addClass('inline-form')[0]);
 
+        def.append(form.addClass('inline-form')[0]);
         formSubmissionHandler(form, originText);
 
         that.text('cancel');
@@ -184,13 +184,25 @@
     form.ajaxForm(function() {
       if(type === 'delete') {
         form.closest('tbody').remove();
+      } else if(type === 'edit') {
+
+
+        $.ajax({
+          url: document.URL,
+          success: function(data) {
+            var id = $(form).parent().find('span[id^="score_"]')[0].id,
+                newComment = $(data).find('#' + id).closest('table').closest('tr');
+
+            form.closest('table').closest('tr').replaceWith(newComment)
+
+            //more elegant way to do this without readding handlers to everything?
+            setupInlining();
+          }
+        });
       } else {
         form.remove();
       }
     });
-
-
-    console.log(type)
   }
 
   function hideInline(elem, text) {
@@ -299,6 +311,7 @@
 
     $(reply + ',' + edit + ',' + del).click(function(event) {
       event.preventDefault();
+      $(this).off('click');
       showInline(this);
     });
   }
