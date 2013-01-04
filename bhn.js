@@ -303,12 +303,12 @@
   }
 
   function purge(obj) {
-    var innerKey;
+    var key;
 
-    for(innerKey in obj) {
-      if(obj.hasOwnProperty(innerKey)) {
-        if(obj[innerKey].d && daysOld(obj[innerKey], 1)) {
-          BHN.removeItem(innerKey);
+    for(key in obj) {
+      if(obj.hasOwnProperty(key)) {
+        if(obj.key.d && daysOld(obj.key, 5)) {
+          BHN.removeItem(key);
         }
       }
     }
@@ -318,7 +318,7 @@
 
     BHN.getItem('lastPurge', function(when) {
       if(when.lastPurge) {
-        if(daysOld({ 'd': when.lastPurge }, 1/24)) {
+        if(daysOld({ 'd': when.lastPurge }, 1)) {
           purgeOldComments();
           BHN.setItem('lastPurge', new Date().getTime());
         }
@@ -380,6 +380,26 @@
     });
   }
 
+  function neverEndingScroll() {
+    $('a[href^="/x?fnid"]:contains("More")').click(function(event) {
+      event.preventDefault();
+      var more = $(this).parent().parent();
+
+      $(this).click(function(event) {
+        event.preventDefault();
+      });
+
+      $.ajax({
+        url: more.find('a')[0].getAttribute('href'),
+        success: function(data) {
+          more.prev().remove();
+          more.replaceWith( $(data).find('.comhead').closest('tbody').html() );
+          neverEndingScroll();
+        }
+      });
+    });
+  }
+
   $(function() {
     $('a[href="submit"]').off('click');
 
@@ -387,6 +407,7 @@
     loadPrefs();
     setupInlining();
     inlineSubmission();
+    neverEndingScroll();
 
     if(isThreadPage()) {
 
