@@ -26,11 +26,7 @@
 ;(function() {
   'use strict';
 
-  var HHNPrefs = {
-    animateScroll: true
-  },
-
-  HHN = {
+  var HHN = {
     storage: chrome.storage.sync,
 
     setItem: function(key, value) {
@@ -49,15 +45,20 @@
   };
 
   function saveComments(storyID, commentIDs) {
-    var obj = {}, i;
+    var obj = {},
+        i;
 
     if(commentIDs.length) {
       obj.c = [];
-      obj.d = new Date().getTime();
 
-      commentIDs.forEach(function (elem) {
-        obj.c.push(elem);
-      });
+      //this won't work for older threads that are split into multiple pages,
+      //but solving that is more complicated than just retrieving the current
+      //list and appending to it
+      for(i = 0; i < commentIDs.length; i++) {
+        obj.c.push(commentIDs[i]);
+      }
+
+      obj.d = new Date().getTime();
       HHN.setItem(storyID, obj);
     }
   }
@@ -131,16 +132,9 @@
     return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
 
-  function hhnScrollTo(y) {
-    if(HHNPrefs.animateScroll) {
-      $('html, body').animate({ scrollTop: y }, 100);
-    } else {
-      window.scrollTo(0, y);
-    }
-  }
-
   function scrollToNextUnread() {
     var firstUnread = $( $('.unread')[0] );
+
     $('.reading').removeClass('reading');
 
     if(firstUnread.length) {
@@ -149,9 +143,9 @@
       firstUnread.removeClass('unread');
 
       if(firstUnread.height() >= window.innerHeight) {
-        hhnScrollTo(firstUnread.offset().top);
+        $('html, body').animate({ scrollTop: firstUnread.offset().top }, 100);
       } else {
-        hhnScrollTo( centerOf(firstUnread) );
+        $('html, body').animate({ scrollTop: centerOf(firstUnread) }, 100);
       }
     }
   }
@@ -174,8 +168,6 @@
             newComment = $(data).find('#' + id).closest('table').closest('tr');
 
         form.closest('table').closest('tr').replaceWith(newComment);
-
-        //more elegant way to do this without readding handlers to everything?
         setupInlining();
       }
     });
@@ -194,26 +186,45 @@
     });
   }
 
+  function processForm(form, type) {
+    if(type === 'edit') {
+      form.find('td[valign="top"]:contains("text:")').remove();
+      form.find('a[href="formatdoc"]').parent().remove();
+    } else if(type === 'delete') {
+      var cancelLink = $('<a href="#"/>').click(function(event) {
+        event.preventDefault();
+        form.remove();
+      }).text('cancel');
+      form.find('input[value="No"]').replaceWith(cancelLink);
+    }
+  }
+
   function showInline(elem) {
-    var url = elem.getAttribute('href').match(/[^\/].+$/),
+    var href = elem.getAttribute('href'),
+        url = 'http://news.ycombinator.com/',
         that = $(elem);
 
+    if(href[0] === '/') {
+      href = href.substr(1, href.length);
+    }
+    url += href;
     $('.inline-form').remove();
 
     $.ajax({
       url: url,
       success: function(data) {
-        var form = $(data).find('form'),
-            def = that.closest('.default'),
+        var def = that.closest('.default'),
+            form = $(data).find('form'),
             originText = that.text();
 
-        def.append( form.addClass('inline-form')[0] );
-        def.find('textarea').focus();
+        processForm(form, originText);
 
+        def.append(form.addClass('inline-form')[0]);
         removeSpinner();
         formSubmissionHandler(form, originText);
 
         that.text('cancel');
+        def.find('textarea').focus();
         that.off('click');
         that.click(function(event) {
           event.preventDefault();
@@ -224,8 +235,10 @@
   }
 
   function hideInline(elem, text) {
-    elem = $(elem).text(text).off('click');
+    elem = $(elem);
+    elem.text(text);
     elem.closest('.default').find('.inline-form').remove();
+    elem.off('click');
     elem.click(function(event) {
       event.preventDefault();
       showInline(this);
@@ -263,13 +276,14 @@
 
   function daysOld(obj, days) {
     var now = new Date().getTime(),
-        then = parseInt(obj.d, 10),
-        age;
+        then = parseInt(obj.d, 10);
 
     if(then) {
-      age = (now - then) / 86400000 > days; //86400000 = ms per day
+      //86400000 is the number of ms in a day
+      return (now - then) / 86400000 > days;
+    } else {
+      return null;
     }
-    return age;
   }
 
   function purgeOldComments() {
@@ -300,7 +314,7 @@
 
     HHN.getItem('lastPurge', function(when) {
       if(when.lastPurge) {
-        if( daysOld({ 'd': when.lastPurge }, 1) ) {
+        if(daysOld({ 'd': when.lastPurge }, 1)) {
           purgeOldComments();
           HHN.setItem('lastPurge', new Date().getTime());
         }
@@ -315,50 +329,12 @@
         edit = 'a[href^="edit"]',
         del = 'a[href^="/x?fnid="]:contains("delete")';
 
-    $(reply + ',' + edit + ',' + del).click(function(event) {
+
+    $(reply + ',' + edit + ',' + del).off('click').click(function(event) {
       event.preventDefault();
       showSpinner(this);
       $(this).off('click');
       showInline(this);
-    });
-  }
-
-  function settingsIcon() {
-    var pagetop = $('span.pagetop')[1],
-        div = '<div id="settings-panel" name="settings-panel" class="hidden" />';
-
-    $('body').append( $(div).append('<span />').text('this isn\'t implented yet') );
-
-    if(pagetop) {
-      $(pagetop).append($('<span> | </span>'));
-      $(pagetop).append($('<a href="#settings-panel" class="settings"/>').text('settings'));
-    }
-    $('.settings').colorbox({html:$('#settings-panel').html(), top:'10%'});
-  }
-
-  function loadPrefs() {
-    HHN.getItem('HHNPrefs', function(data) {
-      var prefs = HHNPrefs;
-
-      HHN.setItem('HHNPrefs', prefs);
-    });
-  }
-
-  function inlineSubmission() {
-    $('a[href="submit"]').click(function(event) {
-      event.preventDefault();
-      var href = this.getAttribute('href');
-      $.ajax({
-        url:'http://news.ycombinator.com/' + href,
-        success: function(data) {
-          var form = $(data).find('form');
-          form.find('a[href$="bookmarklet.html"]').closest('tr').remove();
-          $.colorbox({
-            html: form.parent().html(),
-            top:'10%'
-          });
-        }
-      });
     });
   }
 
@@ -383,15 +359,10 @@
   }
 
   $(function() {
-    $('a[href="submit"]').off('click');
-
-    settingsIcon();
-    loadPrefs();
     setupInlining();
-    inlineSubmission();
-    if(!document.URL.match(/thread/) && !document.URL.match(/ask/) ) {
-      neverEndingScroll();
-    }
+
+    if(!document.URL.match(/threads/) && !document.URL.match(/ask/))
+    neverEndingScroll();
 
     if(isThreadPage()) {
 

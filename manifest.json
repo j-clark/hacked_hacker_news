@@ -2,12 +2,12 @@
  "content_scripts": [ {
     "css": [ "hhn.css" ],
     "js": [ "jquery-1.8.3.min.js", "hhn.js", "jquery.colorbox.js", "jquery.form.js" ],
-    "matches": [ "http://news.ycombinator.com/*" ],
+    "matches": [ "http://news.ycombinator.com/*","https://news.ycombinator.com/*" ],
     "run_at": "document_start"
   } ],
   "name": "Hacked Hacker News",
   "homepage_url": "http://github.com/j-clark/hacked_hacker_news",
-  "version": "0.9",
+  "version": "0.91",
   "manifest_version": 2,
   "permissions": ["storage"],
   "icons": {
