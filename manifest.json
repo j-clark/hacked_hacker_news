@@ -11,13 +11,13 @@
   "manifest_version": 2,
   "permissions": ["storage"],
   "icons": {
-    "16": "16.jpeg",
-    "48": "48.jpeg",
-    "128": "128.jpeg"
+    "16": "img/16.png",
+    "48": "img/48.png",
+    "128": "img/128.png"
   },
   "web_accessible_resources": [
     "img/spinner.gif"
   ],
 
-  "description": "Hacker News got hacked! A suite of improvements to the Hacker News browsing experience"
+  "description": "Hacker News got hacked! Browsing and commenting on Hacker News made easier."
 }
