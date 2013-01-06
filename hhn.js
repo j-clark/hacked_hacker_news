@@ -26,16 +26,11 @@
 ;(function() {
   'use strict';
 
-  var BHNConst = {
-    hrefID: 'a[href^="item?id="]',
-    prefsKey: 'BHNPrefs'
-  },
-
-  BHNPrefs = {
+  var HHNPrefs = {
     animateScroll: true
   },
 
-  BHN = {
+  HHN = {
     storage: chrome.storage.sync,
 
     setItem: function(key, value) {
@@ -54,21 +49,16 @@
   };
 
   function saveComments(storyID, commentIDs) {
-    var obj = {},
-        i;
+    var obj = {}, i;
 
     if(commentIDs.length) {
       obj.c = [];
-
-      //this won't work for older threads that are split into multiple pages,
-      //but solving that is more complicated than just retrieving the current
-      //list and appending to it
-      for(i = 0; i < commentIDs.length; i++) {
-        obj.c.push(commentIDs[i]);
-      }
-
       obj.d = new Date().getTime();
-      BHN.setItem(storyID, obj);
+
+      commentIDs.forEach(function (elem) {
+        obj.c.push(elem);
+      });
+      HHN.setItem(storyID, obj);
     }
   }
 
@@ -91,8 +81,8 @@
   function markUnreadComments() {
     var storyID = getStoryID();
 
-    BHN.getItem(storyID, function(item) {
-      $('.comhead > ' + BHNConst.hrefID).each(function() {
+    HHN.getItem(storyID, function(item) {
+      $('.comhead > a[href^="item?id="]').each(function() {
         var id = this.getAttribute('href').split('=')[1],
             thread = item && item[storyID];
 
@@ -105,10 +95,10 @@
 
   function setUnreadCounts() {
     $('.subtext').find('a:contains("flag")').each(function() {
-      var comments_link = $(this).parent().find(BHNConst.hrefID),
+      var comments_link = $(this).parent().find('a[href^="item?id="]'),
           id = comments_link[0].getAttribute('href').split('=')[1];
 
-      BHN.getItem(id, function(thread) {
+      HHN.getItem(id, function(thread) {
         var unread = parseInt(comments_link.text(), 10) || 0;
 
         if(thread[id] && thread[id].c) {
@@ -121,7 +111,7 @@
 
   function getCommentIDs() {
     var ids = [];
-    $('.comhead > ' + BHNConst.hrefID).each(function() {
+    $('.comhead > a[href^="item?id="]').each(function() {
       ids.push(this.getAttribute('href').split('=')[1]);
     });
     return ids;
@@ -129,7 +119,7 @@
 
   function getReadCommentIDs() {
     var ids = [];
-    $('.comhead > ' + BHNConst.hrefID).each(function() {
+    $('.comhead > a[href^="item?id="]').each(function() {
       if(!$(this).closest('.default').hasClass('unread')) {
         ids.push(this.getAttribute('href').split('=')[1]);
       }
@@ -141,8 +131,8 @@
     return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
 
-  function bhnScrollTo(y) {
-    if(BHNPrefs.animateScroll) {
+  function hhnScrollTo(y) {
+    if(HHNPrefs.animateScroll) {
       $('html, body').animate({ scrollTop: y }, 100);
     } else {
       window.scrollTo(0, y);
@@ -151,7 +141,6 @@
 
   function scrollToNextUnread() {
     var firstUnread = $( $('.unread')[0] );
-
     $('.reading').removeClass('reading');
 
     if(firstUnread.length) {
@@ -160,9 +149,9 @@
       firstUnread.removeClass('unread');
 
       if(firstUnread.height() >= window.innerHeight) {
-        bhnScrollTo(firstUnread.offset().top);
+        hhnScrollTo(firstUnread.offset().top);
       } else {
-        bhnScrollTo( centerOf(firstUnread) );
+        hhnScrollTo( centerOf(firstUnread) );
       }
     }
   }
@@ -206,29 +195,25 @@
   }
 
   function showInline(elem) {
-    var href = elem.getAttribute('href'),
-        url = 'http://news.ycombinator.com/',
+    var url = elem.getAttribute('href').match(/[^\/].+$/),
         that = $(elem);
 
-    if(href[0] === '/') {
-      href = href.substr(1, href.length);
-    }
-    url += href;
     $('.inline-form').remove();
 
     $.ajax({
       url: url,
       success: function(data) {
-        var def = that.closest('.default'),
-            form = $(data).find('form'),
+        var form = $(data).find('form'),
+            def = that.closest('.default'),
             originText = that.text();
 
-        def.append(form.addClass('inline-form')[0]);
+        def.append( form.addClass('inline-form')[0] );
+        def.find('textarea').focus();
+
         removeSpinner();
         formSubmissionHandler(form, originText);
 
         that.text('cancel');
-        def.find('textarea').focus();
         that.off('click');
         that.click(function(event) {
           event.preventDefault();
@@ -239,17 +224,15 @@
   }
 
   function hideInline(elem, text) {
-    elem = $(elem);
-    elem.text(text);
+    elem = $(elem).text(text).off('click');
     elem.closest('.default').find('.inline-form').remove();
-    elem.off('click');
     elem.click(function(event) {
       event.preventDefault();
       showInline(this);
     });
   }
 
-  function bhnCares() {
+  function hhnCares() {
     return document.URL.indexOf('thread') < 0 &&
       document.URL.indexOf('newcomments') < 0 &&
       !isThreadPage();
@@ -280,23 +263,22 @@
 
   function daysOld(obj, days) {
     var now = new Date().getTime(),
-        then = parseInt(obj.d, 10);
+        then = parseInt(obj.d, 10),
+        age;
 
     if(then) {
-      //86400000 is the number of ms in a day
-      return (now - then) / 86400000 > days;
-    } else {
-      return null;
+      age = (now - then) / 86400000 > days; //86400000 = ms per day
     }
+    return age;
   }
 
   function purgeOldComments() {
-    BHN.getItem(null, function(storage) {
+    HHN.getItem(null, function(storage) {
       var key,
           obj;
       for(key in storage) {
         if(storage.hasOwnProperty(key)) {
-          BHN.getItem(key, purge);
+          HHN.getItem(key, purge);
         }
       }
     });
@@ -308,7 +290,7 @@
     for(key in obj) {
       if(obj.hasOwnProperty(key)) {
         if(obj.key.d && daysOld(obj.key, 5)) {
-          BHN.removeItem(key);
+          HHN.removeItem(key);
         }
       }
     }
@@ -316,14 +298,14 @@
 
   function purgeCheck() {
 
-    BHN.getItem('lastPurge', function(when) {
+    HHN.getItem('lastPurge', function(when) {
       if(when.lastPurge) {
-        if(daysOld({ 'd': when.lastPurge }, 1)) {
+        if( daysOld({ 'd': when.lastPurge }, 1) ) {
           purgeOldComments();
-          BHN.setItem('lastPurge', new Date().getTime());
+          HHN.setItem('lastPurge', new Date().getTime());
         }
       } else {
-        BHN.setItem('lastPurge', new Date().getTime());
+        HHN.setItem('lastPurge', new Date().getTime());
       }
     });
   }
@@ -355,10 +337,10 @@
   }
 
   function loadPrefs() {
-    BHN.getItem(BHNConst.prefsKey, function(data) {
-      var prefs = BHNPrefs;
+    HHN.getItem('HHNPrefs', function(data) {
+      var prefs = HHNPrefs;
 
-      BHN.setItem(BHNConst.prefsKey, prefs);
+      HHN.setItem('HHNPrefs', prefs);
     });
   }
 
@@ -407,7 +389,9 @@
     loadPrefs();
     setupInlining();
     inlineSubmission();
-    neverEndingScroll();
+    if(!document.URL.match(/thread/) && !document.URL.match(/ask/) ) {
+      neverEndingScroll();
+    }
 
     if(isThreadPage()) {
 
@@ -416,7 +400,7 @@
       saveComments(getStoryID(), getCommentIDs());
       handleKeypress();
 
-    } else if(bhnCares()) {
+    } else if(hhnCares()) {
       setUnreadCounts();
     }
     purgeCheck();

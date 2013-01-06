@@ -1,7 +1,7 @@
 {
  "content_scripts": [ {
-    "css": [ "bhn.css" ],
-    "js": [ "jquery-1.8.3.min.js", "bhn.js", "jquery.colorbox.js", "jquery.form.js" ],
+    "css": [ "hhn.css" ],
+    "js": [ "jquery-1.8.3.min.js", "hhn.js", "jquery.colorbox.js", "jquery.form.js" ],
     "matches": [ "http://news.ycombinator.com/*" ],
     "run_at": "document_start"
   } ],
@@ -11,11 +11,13 @@
   "manifest_version": 2,
   "permissions": ["storage"],
   "icons": {
-
+    "16": "16.jpeg",
+    "48": "48.jpeg",
+    "128": "128.jpeg"
   },
   "web_accessible_resources": [
     "img/spinner.gif"
   ],
 
-  "description": "A suite of improvements to the Hacker News browsing experience"
+  "description": "Hacker News got hacked! A suite of improvements to the Hacker News browsing experience"
 }
