@@ -134,7 +134,6 @@
 
   function scrollToNextUnread() {
     var firstUnread = $( $('.unread')[0] );
-
     $('.reading').removeClass('reading');
 
     if(firstUnread.length) {
@@ -328,7 +327,6 @@
     var reply = 'a[href^="reply"]',
         edit = 'a[href^="edit"]',
         del = 'a[href^="/x?fnid="]:contains("delete")';
-
 
     $(reply + ',' + edit + ',' + del).off('click').click(function(event) {
       event.preventDefault();
