@@ -1,7 +1,7 @@
 {
  "content_scripts": [ {
     "css": [ "hhn.css" ],
-    "js": [ "jquery-1.8.3.min.js", "hhn.js", "jquery.colorbox.js", "jquery.form.js" ],
+    "js": [ "jquery-1.8.3.min.js", "hhn.js", "jquery.form.js" ],
     "matches": [ "http://news.ycombinator.com/*","https://news.ycombinator.com/*" ],
     "run_at": "document_start"
   } ],
