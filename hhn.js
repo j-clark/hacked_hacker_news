@@ -97,8 +97,9 @@
   function setUnreadCounts() {
 
     $('.subtext').find('span[id^="score_"]').each(function() {
-      var comments_link = $(this).parent().find('a[href^="item?id="]'),
-          id = comments_link[0].getAttribute('href').split('=')[1];
+      var comments_link = $(this).parent().find('a[href^="item?id="]');
+      if(comments_link.next().hasClass('.unread-count')) return;
+      var id = comments_link[0].getAttribute('href').split('=')[1];
 
       HHN.getItem(id, function(thread) {
         var unread = parseInt(comments_link.text(), 10) || 0;
@@ -352,6 +353,7 @@
           more.prev().remove();
           more.replaceWith( $(data).find('.comhead').closest('tbody').html() );
           neverEndingScroll();
+          setUnreadCounts();
         }
       });
     });
