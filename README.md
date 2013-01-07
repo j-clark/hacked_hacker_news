@@ -13,3 +13,5 @@ Hacked Hacker News will
   * 'z': downvote current comment
   * 'r': reply to current comment
 * add "infinite scroll" to /news and /newest
+
+###[On the Chrome Web Store](https://chrome.google.com/webstore/detail/hacked-hacker-news/hlddllcemddpbekleofllndfidcgbgdp)
