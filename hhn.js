@@ -63,9 +63,9 @@
     }
   }
 
-  function unreadLink(a, unread) {
+  function unreadLink(a, unread, clas) {
     return '<a href="' + a.getAttribute('href') +
-      '" class="unread-count">' + unread + ' unread</a>';
+      '" class="' + clas + '">' + unread + ' unread</a>';
   }
 
   function getStoryID() {
@@ -102,12 +102,16 @@
       var id = comments_link[0].getAttribute('href').split('=')[1];
 
       HHN.getItem(id, function(thread) {
-        var unread = parseInt(comments_link.text(), 10) || 0;
+        var unread = parseInt(comments_link.text(), 10) || 0,
+            clas = '';
 
         if(thread[id] && thread[id].c) {
           unread -= thread[id].c.length;
+          if(unread) {
+            clas = 'unread-count';
+          }
         }
-        comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread));
+        comments_link.parent().append(' | ' + unreadLink(comments_link[0], unread, clas));
       });
     });
   }
