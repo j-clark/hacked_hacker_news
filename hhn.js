@@ -357,13 +357,13 @@
   }
 
   $(function() {
-    setupInlining();
 
     if(!document.URL.match(/threads/) && !document.URL.match(/ask/))
       neverEndingScroll();
 
     if(isThreadPage()) {
 
+      setupInlining();
       setUnreadCounts();
       markUnreadComments();
       saveComments(getStoryID(), getCommentIDs());
