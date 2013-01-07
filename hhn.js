@@ -95,7 +95,8 @@
   }
 
   function setUnreadCounts() {
-    $('.subtext').find('a:contains("flag")').each(function() {
+
+    $('.subtext').find('span[id^="score_"]').each(function() {
       var comments_link = $(this).parent().find('a[href^="item?id="]'),
           id = comments_link[0].getAttribute('href').split('=')[1];
 
