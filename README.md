@@ -1,15 +1,15 @@
-###A Chrome extension for a better Hacker News experience###
+#Hacked Hacker News
+Hacker News got hacked! Browsing and commenting on Hacker News is now easier.
 
-* This thing is currently in beta
-* This is not currently on the Chrome Web Store, so if you want to use it, you will need to use it as an unpacked extension
-
-###Current features:###
-* Keeps track of unread comments
-  * Shows unread count on front page and comment page
-  * Highlights unread comments
-* Inline reply submission, editing and deletion
-* Keyboard navigation in comment threads
+##Here's what it does###
+Hacked Hacker News will
+* remember which comments you have read
+* highlight unread comments
+* display unread counts by the thread titles
+* add inline submission, editing and deletion of comments
+* add keyboard controls to comment threads
   * 'j': go to next unread comment
-  * 'a': upvote currently selected comment
-  * 'z': downvote currently selected comment
-  * 'r': reply to currently selected comment
+  * 'a': upvote current comment
+  * 'z': downvote current comment
+  * 'r': reply to current comment
+* add "infinite scroll" to /news and /newest

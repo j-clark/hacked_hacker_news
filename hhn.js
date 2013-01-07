@@ -362,7 +362,7 @@
     setupInlining();
 
     if(!document.URL.match(/threads/) && !document.URL.match(/ask/))
-    neverEndingScroll();
+      neverEndingScroll();
 
     if(isThreadPage()) {
 
