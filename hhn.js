@@ -64,13 +64,13 @@
   }
 
   function unreadLink(a, unread) {
-    var clas = '';
+    var cls = '';
 
     if(unread > 0) {
-      clas = 'unread-count';
+      cls = 'unread-count';
     }
     return '<a href="' + a.getAttribute('href') +
-      '" class="' + clas + '">' + unread + ' unread</a>';
+      '" class="' + cls + '">' + unread + ' unread</a>';
   }
 
   function getStoryID() {
@@ -147,12 +147,15 @@
 
       firstUnread.addClass('reading');
       firstUnread.removeClass('unread');
+      scrollToComment(firstUnread);
+    }
+  }
 
-      if(firstUnread.height() >= window.innerHeight) {
-        $('html, body').animate({ scrollTop: firstUnread.offset().top }, 100);
-      } else {
-        $('html, body').animate({ scrollTop: centerOf(firstUnread) }, 100);
-      }
+  function scrollToComment(comment) {
+    if(comment.height() >= window.innerHeight) {
+      $('html, body').animate({ scrollTop: comment.offset().top }, 100);
+    } else {
+      $('html, body').animate({ scrollTop: centerOf(comment) }, 100);
     }
   }
 
@@ -190,6 +193,21 @@
       }
       removeSpinner();
     });
+  }
+
+  function findParent(elem) {
+    //hacker news indents comments with a clear image
+    //that is depth * 40 pixels wide
+    var depth = elem.prev().prev().width() / 40,
+        prev = null;
+
+    if(depth === 0) return null;
+
+    prev = elem.closest('tbody').closest('tr');
+    while(prev.find('img').width() / 40 !== depth - 1) {
+      prev = prev.prev();
+    }
+    return prev;
   }
 
   function processForm(form, type) {
@@ -366,8 +384,9 @@
 
   $(function() {
 
-    if(!document.URL.match(/threads/) && !document.URL.match(/ask/))
+    if(!document.URL.match(/threads/) && !document.URL.match(/ask/)) {
       neverEndingScroll();
+    }
 
     if(isThreadPage()) {
 
