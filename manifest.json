@@ -7,7 +7,7 @@
   } ],
   "name": "Hacked Hacker News",
   "homepage_url": "http://github.com/j-clark/hacked_hacker_news",
-  "version": "0.941",
+  "version": "0.942",
   "manifest_version": 2,
   "permissions": ["storage"],
   "icons": {
