@@ -68,6 +68,8 @@
 
     if(unread > 0) {
       cls += 'bold'
+    } else {
+      unread = 0; // don't show negative unreads if a comment is deleted
     }
     return '<a href="' + a.getAttribute('href') +
       '" class="' + cls + '">' + unread + ' unread</a>';
