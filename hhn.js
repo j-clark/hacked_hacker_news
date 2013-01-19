@@ -442,8 +442,7 @@
           }
         }
       });
-
-    }, 1000);
+    }, page ? 1000 : 1);
   }
 
   function replaceLinkWithPage(more, html) {
