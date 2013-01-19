@@ -404,34 +404,69 @@
     });
   }
 
-  function neverEndingScroll() {
+  function tryAgain() {
+    HHNLog('need to try again')
+    setTimeout(function() {
+      $.ajax({
+        url: document.URL,
+        success: loadNextPage
+      })
+    }, 1000);
+  }
+
+  function moreLinkClickHandler() {
     $('a[href^="/x?fnid"]:contains("More")').click(function(event) {
       event.preventDefault();
       $(this).off('click').click(function(event) {
         event.preventDefault();
       });
+      loadNextPage(null);
+    });
+  }
 
-      var more = $(this).parent().parent();
+  function loadNextPage(page) {
+    HHNLog('from loadNextPage')
+    setTimeout(function() {
+
+      var moreLink = 'a[href^="/x?fnid"]:contains("More")'
+      var more = $(moreLink).parent().parent();
+      var url = null;
+
+      if(page) {
+        url = $(page).find(moreLink)[0].getAttribute('href');
+      } else {
+        url = more.find('a')[0].getAttribute('href');
+      }
+
       $.ajax({
-        url: more.find('a')[0].getAttribute('href'),
-        success: function(data) {
-          if(data !== 'Unknown or expired link.') {
-            more.prev().remove();
-            more.replaceWith( $(data).find('.comhead').closest('tbody').html() );
-            neverEndingScroll();
-            setUnreadCounts();
+        url: url,
+        success: function(html) {
+          if(html !== 'Unknown or expired link.') {
+            replaceLinkWithPage(more, html)
           } else {
-            window.location.href = this.url;
+            if(page) {
+              window.location.href = this.url;
+            } else {
+              tryAgain();
+            }
           }
         }
       });
-    });
+
+    }, 1000);
+  }
+
+  function replaceLinkWithPage(more, html) {
+    more.prev().remove();
+    more.replaceWith( $(html).find('.comhead').closest('tbody').html() );
+    moreLinkClickHandler();
+    setUnreadCounts();
   }
 
   $(function() {
 
     if(!document.URL.match(/threads/) && !document.URL.match(/ask/)) {
-      neverEndingScroll();
+      moreLinkClickHandler();
     }
 
     if(isThreadPage()) {
