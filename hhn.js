@@ -104,7 +104,7 @@
 
     function _purgeOldComments() {
       HHN.getItem(null, function(storage) {
-        var key, obj;
+        var key;
 
         for(key in storage) {
           if(storage.hasOwnProperty(key)) {
@@ -117,7 +117,6 @@
     function _purge(obj) {
       var key;
 
-      HHNLog('*******************');
       HHNLog(obj);
 
       for(key in obj) {
@@ -128,7 +127,6 @@
           }
         }
       }
-      HHNLog('*******************');
     }
 
     return {
@@ -137,9 +135,10 @@
   })(),
 
   HHNEndlessFrontPage = (function() {
+    var paths = ['/','/news','/newest', '/newcomments', '/ask'];
 
     function init() {
-      if(!document.URL.match(/threads/) && !document.URL.match(/ask/)) {
+      if(paths.indexOf(window.location.pathname) > -1) {
         _linkClickHandler();
       }
     }
@@ -187,7 +186,7 @@
 
     function _replaceLinkWithHTML(more, html) {
       more.prev().remove();
-      more.replaceWith( $(html).find('.comhead').closest('tbody').html() );
+      more.replaceWith( $(html).find('tbody:first > tr')[2].getElementsByTagName('tbody')[0].innerHTML );
 
       _linkClickHandler();
       setUnreadCounts();
