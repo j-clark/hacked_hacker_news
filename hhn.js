@@ -64,8 +64,13 @@
   }
 
   function unreadLink(a, unread) {
+    var cls = 'unread-count ';
+
+    if(unread > 0) {
+      cls += 'bold'
+    }
     return '<a href="' + a.getAttribute('href') +
-      '" class="unread-count">' + unread + ' unread</a>';
+      '" class="' + cls + '">' + unread + ' unread</a>';
   }
 
   function getStoryID() {
