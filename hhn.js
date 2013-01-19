@@ -123,7 +123,7 @@
       for(key in obj) {
         HHNLog(key);
         if(obj.hasOwnProperty(key)) {
-          if(obj[key].d && _daysOld(obj[key], 5)) {
+          if(obj[key].d && _daysOld(obj[key], 3)) {
             HHN.removeItem(key);
           }
         }
@@ -415,10 +415,14 @@
       $.ajax({
         url: more.find('a')[0].getAttribute('href'),
         success: function(data) {
-          more.prev().remove();
-          more.replaceWith( $(data).find('.comhead').closest('tbody').html() );
-          neverEndingScroll();
-          setUnreadCounts();
+          if(data !== 'Unknown or expired link.') {
+            more.prev().remove();
+            more.replaceWith( $(data).find('.comhead').closest('tbody').html() );
+            neverEndingScroll();
+            setUnreadCounts();
+          } else {
+            window.location.href = this.url;
+          }
         }
       });
     });
