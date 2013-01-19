@@ -53,7 +53,7 @@
       setItem: setItem,
       getItem: getItem,
       removeItem: removeItem
-    }
+    };
   })(),
 
   HHNPurge = (function() {
@@ -71,12 +71,14 @@
             HHN.setItem('lastPurge', new Date().getTime());
           } else {
             HHNLog('nope');
-            HHN.setItem('lastPurge', new Date().getTime() - 86400000)
+            HHN.setItem('lastPurge', new Date().getTime() - 86400000);
           }
         } else {
-          HHNLog('nope');
-          HHN.removeItem('lastPurge')
-          HHN.setItem('lastPurge', new Date().getTime());
+          if(debug) {
+            HHNLog('nope');
+            HHN.removeItem('lastPurge');
+            HHN.setItem('lastPurge', new Date().getTime());
+          }
         }
       });
     }
@@ -132,6 +134,68 @@
     return {
       check: check
     };
+  })(),
+
+  HHNEndlessFrontPage = (function() {
+
+    function init() {
+      if(!document.URL.match(/threads/) && !document.URL.match(/ask/)) {
+        _linkClickHandler();
+      }
+    }
+
+    function _retry() {
+      HHNLog('need to try again');
+      setTimeout(function() {
+        $.ajax({
+          url: document.URL,
+          success: _loadNextPage
+        });
+      }, 1000);
+    }
+
+    function _linkClickHandler() {
+      $('a[href^="/x?fnid"]:contains("More")').click(function(event) {
+        event.preventDefault();
+        $(this).off('click').click(function(event) {
+          event.preventDefault();
+        });
+        _loadNextPage(null);
+      });
+    }
+
+    function _loadNextPage(page) {
+      HHNLog('from loadNextPage');
+      setTimeout(function() {
+        var
+          moreLink = 'a[href^="/x?fnid"]:contains("More")',
+          more = $(moreLink).parent().parent(),
+          link = page ? $(page).find(moreLink)[0] : more.find('a')[0];
+
+        $.ajax({
+          url: link.getAttribute('href'),
+          success: function(html) {
+            if(html !== 'Unknown or expired link.') {
+              _replaceLinkWithHTML(more, html);
+            } else {
+              page ? window.location.href = this.url : _retry();
+            }
+          }
+        });
+      }, page ? 1000 : 1);
+    }
+
+    function _replaceLinkWithHTML(more, html) {
+      more.prev().remove();
+      more.replaceWith( $(html).find('.comhead').closest('tbody').html() );
+
+      _linkClickHandler();
+      setUnreadCounts();
+    }
+
+    return {
+      init: init
+    };
   })();
 
   function saveComments(storyID, commentIDs) {
@@ -157,7 +221,7 @@
     var cls = 'unread-count ';
 
     if(unread > 0) {
-      cls += 'bold'
+      cls += 'bold';
     } else {
       unread = 0; // don't show negative unreads if a comment is deleted
     }
@@ -402,62 +466,8 @@
     });
   }
 
-  function tryAgain() {
-    HHNLog('need to try again')
-    setTimeout(function() {
-      $.ajax({
-        url: document.URL,
-        success: loadNextPage
-      })
-    }, 1000);
-  }
-
-  function moreLinkClickHandler() {
-    $('a[href^="/x?fnid"]:contains("More")').click(function(event) {
-      event.preventDefault();
-      $(this).off('click').click(function(event) {
-        event.preventDefault();
-      });
-      loadNextPage(null);
-    });
-  }
-
-  function loadNextPage(page) {
-    HHNLog('from loadNextPage')
-    setTimeout(function() {
-      var
-        moreLink = 'a[href^="/x?fnid"]:contains("More")',
-        more = $(moreLink).parent().parent(),
-        link = page ? $(page).find(moreLink)[0] : more.find('a')[0];
-
-      $.ajax({
-        url: link.getAttribute('href'),
-        success: function(html) {
-          if(html !== 'Unknown or expired link.') {
-            replaceLinkWithPage(more, html)
-          } else {
-            page ? window.location.href = this.url : tryAgain();
-          }
-        }
-      });
-    }, page ? 1000 : 1);
-  }
-
-  function replaceLinkWithPage(more, html) {
-    more
-      .prev()
-      .remove()
-      .replaceWith( $(html).find('.comhead').closest('tbody').html() );
-
-    moreLinkClickHandler();
-    setUnreadCounts();
-  }
-
   $(function() {
-
-    if(!document.URL.match(/threads/) && !document.URL.match(/ask/)) {
-      moreLinkClickHandler();
-    }
+    HHNEndlessFrontPage.init();
 
     if(isThreadPage()) {
 
