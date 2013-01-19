@@ -34,23 +34,29 @@
     }
   },
 
-  HHN = {
-    storage: chrome.storage.local,
+  HHN = (function() {
+    var storage = chrome.storage.local;
 
-    setItem: function(key, value) {
+    function setItem(key, value) {
       var obj = {};
       obj[key] = value;
-      this.storage.set(obj);
-    },
-
-    getItem: function(key, callback) {
-      this.storage.get(key, callback);
-    },
-
-    removeItem: function(key) {
-      this.storage.remove(key);
+      storage.set(obj);
     }
-  },
+
+    function getItem(key, callback) {
+      storage.get(key, callback);
+    }
+
+    function removeItem(key) {
+      storage.remove(key);
+    }
+
+    return {
+      setItem: setItem,
+      getItem: getItem,
+      removeItem: removeItem
+    }
+  })(),
 
   HHNPurge = (function() {
     function check() {
