@@ -1,3 +1,5 @@
+###[On the Chrome Web Store](https://chrome.google.com/webstore/detail/hacked-hacker-news/hlddllcemddpbekleofllndfidcgbgdp)
+
 #Hacked Hacker News
 Hacker News got hacked! Browsing and commenting on Hacker News is now easier.
 
@@ -13,5 +15,3 @@ Hacked Hacker News will
   * 'z': downvote current comment
   * 'r': reply to current comment
 * add "infinite scroll" to /news and /newest
-
-###[On the Chrome Web Store](https://chrome.google.com/webstore/detail/hacked-hacker-news/hlddllcemddpbekleofllndfidcgbgdp)

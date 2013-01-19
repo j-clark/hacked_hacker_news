@@ -27,7 +27,7 @@
   'use strict';
 
   var HHN = {
-    storage: chrome.storage.sync,
+    storage: chrome.storage.local,
 
     setItem: function(key, value) {
       var obj = {};
@@ -64,13 +64,8 @@
   }
 
   function unreadLink(a, unread) {
-    var cls = '';
-
-    if(unread > 0) {
-      cls = 'unread-count';
-    }
     return '<a href="' + a.getAttribute('href') +
-      '" class="' + cls + '">' + unread + ' unread</a>';
+      '" class="unread-count">' + unread + ' unread</a>';
   }
 
   function getStoryID() {
@@ -101,9 +96,9 @@
 
   function setUnreadCounts() {
 
-    $('.subtext').find('span[id^="score_"]').each(function() {
+    $('.subtext span[id^="score_"]').each(function() {
       var comments_link = $(this).parent().find('a[href^="item?id="]');
-      if(comments_link.next().hasClass('.unread-count')) return;
+      if($(this).parent().find('.unread-count').length) return;
       var id = comments_link[0].getAttribute('href').split('=')[1];
 
       HHN.getItem(id, function(thread) {
@@ -135,6 +130,21 @@
     return ids;
   }
 
+  function findParent(elem) {
+    //hacker news indents comments with a clear image
+    //that is depth * 40 pixels wide
+    var depth = elem.prev().prev().width() / 40,
+        prev = null;
+
+    if(depth === 0) return null;
+
+    prev = elem.closest('tbody').closest('tr');
+    while(prev.find('img').width() / 40 !== depth - 1) {
+      prev = prev.prev();
+    }
+    return prev;
+  }
+
   function centerOf(elem) {
     return elem.offset().top - ( window.innerHeight - elem.height() ) / 2;
   }
@@ -144,7 +154,6 @@
     $('.reading').removeClass('reading');
 
     if(firstUnread.length) {
-
       firstUnread.addClass('reading');
       firstUnread.removeClass('unread');
       scrollToComment(firstUnread);
@@ -165,7 +174,7 @@
     $(elem).closest('.default').append(spinner);
   }
 
-  function removeSpinner(elem) {
+  function removeSpinner() {
     $('.spinner').remove();
   }
 
@@ -193,21 +202,6 @@
       }
       removeSpinner();
     });
-  }
-
-  function findParent(elem) {
-    //hacker news indents comments with a clear image
-    //that is depth * 40 pixels wide
-    var depth = elem.prev().prev().width() / 40,
-        prev = null;
-
-    if(depth === 0) return null;
-
-    prev = elem.closest('tbody').closest('tr');
-    while(prev.find('img').width() / 40 !== depth - 1) {
-      prev = prev.prev();
-    }
-    return prev;
   }
 
   function processForm(form, type) {
@@ -312,8 +306,8 @@
 
   function purgeOldComments() {
     HHN.getItem(null, function(storage) {
-      var key,
-          obj;
+      var key, obj;
+
       for(key in storage) {
         if(storage.hasOwnProperty(key)) {
           HHN.getItem(key, purge);
@@ -335,7 +329,6 @@
   }
 
   function purgeCheck() {
-
     HHN.getItem('lastPurge', function(when) {
       if(when.lastPurge) {
         if(daysOld({ 'd': when.lastPurge }, 1)) {
@@ -364,12 +357,11 @@
   function neverEndingScroll() {
     $('a[href^="/x?fnid"]:contains("More")').click(function(event) {
       event.preventDefault();
-      var more = $(this).parent().parent();
-
-      $(this).click(function(event) {
+      $(this).off('click').click(function(event) {
         event.preventDefault();
       });
 
+      var more = $(this).parent().parent();
       $.ajax({
         url: more.find('a')[0].getAttribute('href'),
         success: function(data) {
