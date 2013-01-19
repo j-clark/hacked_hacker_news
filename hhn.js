@@ -26,12 +26,10 @@
 ;(function() {
   'use strict';
 
-  var debug = true,
+  var debug = false,
 
   HHNLog = function(args) {
-    if(debug) {
-      console.log(args);
-    }
+    debug && console.log(args);
   },
 
   HHN = (function() {
@@ -446,8 +444,11 @@
   }
 
   function replaceLinkWithPage(more, html) {
-    more.prev().remove();
-    more.replaceWith( $(html).find('.comhead').closest('tbody').html() );
+    more
+      .prev()
+      .remove()
+      .replaceWith( $(html).find('.comhead').closest('tbody').html() );
+
     moreLinkClickHandler();
     setUnreadCounts();
   }
