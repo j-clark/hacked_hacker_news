@@ -26,7 +26,15 @@
 ;(function() {
   'use strict';
 
-  var HHN = {
+  var debug = true,
+
+  HHNLog = function(args) {
+    if(debug) {
+      console.log(args);
+    }
+  },
+
+  HHN = {
     storage: chrome.storage.local,
 
     setItem: function(key, value) {
@@ -42,7 +50,85 @@
     removeItem: function(key) {
       this.storage.remove(key);
     }
-  };
+  },
+
+  HHNPurge = (function() {
+    function check() {
+
+      HHNLog('checking if i should purge...');
+
+      HHN.getItem('lastPurge', function(when) {
+        if(when.lastPurge) {
+          if(_daysOld({ 'd': when.lastPurge }, 1, true)) {
+
+            HHNLog('calling _purgeOldComments');
+
+            _purgeOldComments();
+            HHN.setItem('lastPurge', new Date().getTime());
+          } else {
+            HHNLog('nope');
+            HHN.setItem('lastPurge', new Date().getTime() - 86400000)
+          }
+        } else {
+          HHNLog('nope');
+          HHN.removeItem('lastPurge')
+          HHN.setItem('lastPurge', new Date().getTime());
+        }
+      });
+    }
+
+    function _daysOld(obj, days, purgeCheck) {
+      var now = new Date().getTime(),
+          then = parseInt(obj.d, 10);
+
+      if(purgeCheck) {
+        HHNLog('last purge was ' + new Date(then));
+      } else {
+        HHNLog('the comment was added on ' + new Date(then));
+        HHNLog('its age is ' + ((now - then) / 86400000).toFixed(2));
+      }
+
+      if(then) {
+        //86400000 is the number of ms in a day
+        return (now - then) / 86400000 > days;
+      } else {
+        return null;
+      }
+    }
+
+    function _purgeOldComments() {
+      HHN.getItem(null, function(storage) {
+        var key, obj;
+
+        for(key in storage) {
+          if(storage.hasOwnProperty(key)) {
+            HHN.getItem(key, _purge);
+          }
+        }
+      });
+    }
+
+    function _purge(obj) {
+      var key;
+
+      HHNLog('*******************');
+      HHNLog(obj);
+
+      for(key in obj) {
+        HHNLog(key);
+        if(obj.hasOwnProperty(key)) {
+          if(obj[key].d && _daysOld(obj[key], 5)) {
+            HHN.removeItem(key);
+          }
+        }
+      }
+      HHNLog('*******************');
+    }
+
+    return {
+      check: check
+    };
+  })();
 
   function saveComments(storyID, commentIDs) {
     var obj = {},
@@ -299,55 +385,6 @@
     });
   }
 
-  function daysOld(obj, days) {
-    var now = new Date().getTime(),
-        then = parseInt(obj.d, 10);
-
-    if(then) {
-      //86400000 is the number of ms in a day
-      return (now - then) / 86400000 > days;
-    } else {
-      return null;
-    }
-  }
-
-  function purgeOldComments() {
-    HHN.getItem(null, function(storage) {
-      var key, obj;
-
-      for(key in storage) {
-        if(storage.hasOwnProperty(key)) {
-          HHN.getItem(key, purge);
-        }
-      }
-    });
-  }
-
-  function purge(obj) {
-    var key;
-
-    for(key in obj) {
-      if(obj.hasOwnProperty(key)) {
-        if(obj.key.d && daysOld(obj.key, 5)) {
-          HHN.removeItem(key);
-        }
-      }
-    }
-  }
-
-  function purgeCheck() {
-    HHN.getItem('lastPurge', function(when) {
-      if(when.lastPurge) {
-        if(daysOld({ 'd': when.lastPurge }, 1)) {
-          purgeOldComments();
-          HHN.setItem('lastPurge', new Date().getTime());
-        }
-      } else {
-        HHN.setItem('lastPurge', new Date().getTime());
-      }
-    });
-  }
-
   function setupInlining() {
     var reply = 'a[href^="reply"]',
         edit = 'a[href^="edit"]',
@@ -398,7 +435,7 @@
     } else if(hhnCares()) {
       setUnreadCounts();
     }
-    purgeCheck();
+    HHNPurge.check();
   });
 
 })();
