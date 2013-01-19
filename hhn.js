@@ -427,28 +427,18 @@
   function loadNextPage(page) {
     HHNLog('from loadNextPage')
     setTimeout(function() {
-
-      var moreLink = 'a[href^="/x?fnid"]:contains("More")'
-      var more = $(moreLink).parent().parent();
-      var url = null;
-
-      if(page) {
-        url = $(page).find(moreLink)[0].getAttribute('href');
-      } else {
-        url = more.find('a')[0].getAttribute('href');
-      }
+      var
+        moreLink = 'a[href^="/x?fnid"]:contains("More")',
+        more = $(moreLink).parent().parent(),
+        link = page ? $(page).find(moreLink)[0] : more.find('a')[0];
 
       $.ajax({
-        url: url,
+        url: link.getAttribute('href'),
         success: function(html) {
           if(html !== 'Unknown or expired link.') {
             replaceLinkWithPage(more, html)
           } else {
-            if(page) {
-              window.location.href = this.url;
-            } else {
-              tryAgain();
-            }
+            page ? window.location.href = this.url : tryAgain();
           }
         }
       });
