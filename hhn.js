@@ -134,7 +134,7 @@
     };
   })(),
 
-  HHNEndlessFrontPage = (function() {
+  HHNEndlessNews = (function() {
     var paths = ['/','/news','/newest', '/newcomments', '/ask'];
 
     function init() {
@@ -147,6 +147,7 @@
       HHNLog('need to try again');
       setTimeout(function() {
         $.ajax({
+          //what if we're not on the first page?!
           url: document.URL,
           success: _loadNextPage
         });
@@ -239,11 +240,54 @@
     return getStoryID() && !$('.default').find('a:contains("parent")').length;
   }
 
-  function markUnreadComments() {
-    var storyID = getStoryID();
+  function processComments() {
+    var comheads = $('.comhead > a[href^="item?id="]');
+    markUnread(comheads);
+    setDepths(comheads);
+    addParentLinks(comheads);
+  }
 
+  function setDepths(comments) {
+    comments.closest('tbody').closest('tr').each(function() {
+      var width = $(this).find('img').width();
+      if(width !== null) {
+        $(this).attr('depth', width / 40);
+      }
+    });
+  }
+
+  function hasParent(elem) {
+    return elem.closest('tr').find('img').width() > 0;
+  }
+
+  function addParentLinks(comments) {
+    comments.closest('.default').each(function() {
+      if(hasParent($(this))) {
+        appendParentLinkAfter($(this).find('u'));
+      }
+    });
+  }
+
+  function appendParentLinkAfter(elem) {
+    if(elem.length) {
+      var link = document.createElement('a');
+      link.setAttribute('href', '#');
+      link.className = 'parent';
+      link.innerHTML = 'parent';
+      $(link).click(function(event) {
+        event.preventDefault();
+        var parent = findParent($(this).closest('.default'));
+        scrollToComment(parent);
+        parent = parent.find('default');
+        parent.css('border-left', '3px orange solid');
+      }).insertAfter(elem[0]);
+    }
+  }
+
+  function markUnread(comments) {
+    var storyID = getStoryID();
     HHN.getItem(storyID, function(item) {
-      $('.comhead > a[href^="item?id="]').each(function() {
+      comments.each(function() {
         var id = this.getAttribute('href').split('=')[1],
             thread = item && item[storyID];
 
@@ -293,13 +337,13 @@
   function findParent(elem) {
     //hacker news indents comments with a clear image
     //that is depth * 40 pixels wide
-    var depth = elem.prev().prev().width() / 40,
+    var depth = elem.closest('[depth]').attr('depth'),
         prev = null;
 
     if(depth === 0) return null;
 
-    prev = elem.closest('tbody').closest('tr');
-    while(prev.find('img').width() / 40 !== depth - 1) {
+    prev = elem.closest('[depth]').prev();
+    while(+prev.attr('depth') !== depth - 1) {
       prev = prev.prev();
     }
     return prev;
@@ -369,27 +413,17 @@
       form.find('td[valign="top"]:contains("text:")').remove();
       form.find('a[href="formatdoc"]').parent().remove();
     } else if(type === 'delete') {
-      var cancelLink = $('<a href="#"/>').click(function(event) {
-        event.preventDefault();
-        form.remove();
-      }).text('cancel');
-      form.find('input[value="No"]').replaceWith(cancelLink);
+      form.find('input[value="No"]').remove();
     }
   }
 
   function showInline(elem) {
-    var href = elem.getAttribute('href'),
-        url = 'http://news.ycombinator.com/',
-        that = $(elem);
+    var that = $(elem);
 
-    if(href[0] === '/') {
-      href = href.substr(1, href.length);
-    }
-    url += href;
     $('.inline-form').remove();
 
     $.ajax({
-      url: url,
+      url: elem.getAttribute('href'),
       success: function(data) {
         var def = that.closest('.default'),
             form = $(data).find('form'),
@@ -466,13 +500,13 @@
   }
 
   $(function() {
-    HHNEndlessFrontPage.init();
+    HHNEndlessNews.init();
 
     if(isThreadPage()) {
 
       setupInlining();
       setUnreadCounts();
-      markUnreadComments();
+      processComments();
       saveComments(getStoryID(), getCommentIDs());
       handleKeypress();
 

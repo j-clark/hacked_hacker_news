@@ -11,8 +11,8 @@
   font-weight: bold;
 }
 
-.parent-link {
-  text-decoration: none;
+.parent {
+  padding-left: 7px;
 }
 
 .settings-icon {
@@ -34,17 +34,4 @@
   width: 600px;
   padding: 30px;
   background: #FFF;
-}
-
-#colorbox, #cboxOverlay, #cboxWrapper{position:absolute; top:0; left:0; z-index:9999; overflow:hidden;}
-
-#cboxOverlay{
-  position:fixed; width:100%; height:100%;
-  background-color: gray;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-#cboxContent {
-  background-color: black;
 }
