@@ -26,10 +26,14 @@
 ;(function() {
   'use strict';
 
-  var debug = false,
+  var debug = true,
 
   HHNLog = function(args) {
     debug && console.log(args);
+  },
+
+  HHNAlert = function(args) {
+    debug && window.alert(args);
   },
 
   HHN = (function() {
@@ -66,19 +70,15 @@
           if(_daysOld({ 'd': when.lastPurge }, 1, true)) {
 
             HHNLog('calling _purgeOldComments');
+            HHNAlert('purging');
 
             _purgeOldComments();
             HHN.setItem('lastPurge', new Date().getTime());
           } else {
             HHNLog('nope');
-            HHN.setItem('lastPurge', new Date().getTime() - 86400000);
           }
         } else {
-          if(debug) {
-            HHNLog('nope');
-            HHN.removeItem('lastPurge');
-            HHN.setItem('lastPurge', new Date().getTime());
-          }
+          HHN.setItem('lastPurge', new Date().getTime());
         }
       });
     }
@@ -257,7 +257,7 @@
   }
 
   function hasParent(elem) {
-    return elem.closest('tr').find('img').width() > 0;
+    return +elem.closest('[depth]').attr('depth') > 0;
   }
 
   function addParentLinks(comments) {
@@ -278,8 +278,6 @@
         event.preventDefault();
         var parent = findParent($(this).closest('.default'));
         scrollToComment(parent);
-        parent = parent.find('default');
-        parent.css('border-left', '3px orange solid');
       }).insertAfter(elem[0]);
     }
   }
