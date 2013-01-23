@@ -26,7 +26,7 @@
 ;(function() {
   'use strict';
 
-  var debug = true,
+  var debug = false,
 
   HHNLog = function(args) {
     debug && console.log(args);
