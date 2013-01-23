@@ -199,8 +199,7 @@
   })();
 
   function saveComments(storyID, commentIDs) {
-    var obj = {},
-        i;
+    var obj = {}, i;
 
     if(commentIDs.length) {
       obj.c = [];
@@ -423,12 +422,12 @@
     $.ajax({
       url: elem.getAttribute('href'),
       success: function(data) {
-        var def = that.closest('.default'),
-            form = $(data).find('form'),
-            originText = that.text();
+        var
+          def = that.closest('.default'),
+          form = $(data).find('form'),
+          originText = that.text();
 
         processForm(form, originText);
-
         def.append(form.addClass('inline-form')[0]);
         removeSpinner();
         formSubmissionHandler(form, originText);
@@ -485,9 +484,10 @@
   }
 
   function setupInlining() {
-    var reply = 'a[href^="reply"]',
-        edit = 'a[href^="edit"]',
-        del = 'a[href^="/x?fnid="]:contains("delete")';
+    var
+      reply = 'a[href^="reply"]',
+      edit = 'a[href^="edit"]',
+      del = 'a[href^="/x?fnid="]:contains("delete")';
 
     $(reply + ',' + edit + ',' + del).off('click').click(function(event) {
       event.preventDefault();
@@ -498,8 +498,9 @@
   }
 
   function wrapThread(elem) {
-    var rootDepth = +elem.attr('depth'),
-        elems = [];
+    var
+      rootDepth = +elem.attr('depth'),
+      elems = [];
 
     elems.push(elem[0]);
     elem = elem.next();
