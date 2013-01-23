@@ -497,6 +497,20 @@
     });
   }
 
+  function wrapThread(elem) {
+    var rootDepth = +elem.attr('depth'),
+        elems = [];
+
+    elems.push(elem[0]);
+    elem = elem.next();
+
+    while(+elem.attr('depth') > rootDepth) {
+      elems.push(elem[0]);
+      elem = elem.next();
+    }
+    $(elems).wrapAll('<div class="thread" />');
+  }
+
   $(function() {
     HHNEndlessNews.init();
 
