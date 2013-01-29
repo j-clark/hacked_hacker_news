@@ -321,16 +321,6 @@
     return ids;
   }
 
-  function getReadCommentIDs() {
-    var ids = [];
-    $('.comhead > a[href^="item?id="]').each(function() {
-      if(!$(this).closest('.default').hasClass('unread')) {
-        ids.push(this.getAttribute('href').split('=')[1]);
-      }
-    });
-    return ids;
-  }
-
   function findParent(elem) {
     //hacker news indents comments with a clear image
     //that is depth * 40 pixels wide
